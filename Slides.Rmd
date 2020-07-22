@@ -1,0 +1,340 @@
+---
+title: "Introduction to R"
+author: "Ernesto Cuadra Foy"
+date: "Insert Presentation Date"
+output:
+  xaringan::moon_reader:
+    css: [default, metropolis, metropolis-fonts]
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+# Outline
+
+- What is `R`
+- Setting up `RStudio` in your computer
+- Examples
+- Basics of `R`
+- Some `R` Coding
+- Importing a dataset in `RStudio`
+---
+# What is R?
+
+- R is a programming language environment for statistical computing
+<img src ="https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/285_R_Project_logo-512.png" ALIGN = "right" width="300" height="300"/> <BR CLEAR="left" />
+- Widely used among statisticians, data scientists and is currently ranked 9th in the TIOBE index
+
+- R includes a wide variety of statistical and graphical techniques
+- Many free resources to learn `R`
+- **It's free!**
+---
+# Setting up R
+- R can be accessed through two methods
+
+- Downloading and installing RStudio Desktop and R from the following link 
+  + https://rstudio.com/products/rstudio/download
+
+- Using the cloud version of RStudio. No install required, can be run from the browser
+  + https://rstudio.cloud/
+
+
+<img align="left" width="200" height="200", src="rcloud.png" border="1"/>
+
+<img align="right" width="300" height="200", src="Rsetup.PNG" border="1"/>
+---
+# Working to RStudio
+
+- Getting to know the environment
+
+
+<img src="Env.png" border="1"/>
+
+
+---
+# Working with RStudio
+- Before starting any kind of work it is **very important** to have your environment set
+- An environment is the space where all your variables, formulas, plots and everything related to your project will be saved
+
+<img align="center" src="Setup.png" width="800" height="400"/>
+---
+# What statistical functions are in R?
+- Writing the following function will show you the list of statistical tests available
+```{r, echo = TRUE, tidy=TRUE, comment=""}
+
+library(help = "stats")
+```
+---
+# Examples of R Graphics
+## Scatterplot with statistical notation
+<img align="center" src="scatterplot.png" width="600" height="480" border="1"/>
+---
+# Examples of R Graphics
+## Histograms
+<img align="center" src="histogramtext.png" width="600" height="400" border="1"/>
+---
+# Examples of R Graphics
+## Boxplot
+<img src="boxplots.png" border="1"/>
+---
+# Examples of R Graphics
+## Boxplot
+<img src="boxplotanova.png" width="80%" border="1"/>
+---
+# Examples of R Graphics
+## Faceting graphs
+
+<img src="facetplots.png" width="70%" border="1"/>
+---
+# Examples of R Graphics
+## Heatmaps
+<img src="heatmap.png" width="60%" border="1"/>
+
+---
+# Specialized tools for Bioinformatics
+Bioconductor is a project that focuses in providing `R` tools for analysis of high-throughput biological assays. Some of the project's goals include:
+.pull-left[
+- Provide widespread access to a borad range of powerful statistical and graphical methods for analysis of genomic data
+- Facilitate he inclusion of biological metadata in the analysis of genomic data from different sources
+- Provide a common software platform that enables rapid development of interoperable software
+- Train researchers on computational and statistical methods
+]
+.pull-right[![](bioconductor.gif)]
+---
+# Specialized tools for Bioinformatics
+## CytoExploreR
+
+- Specifically designed to integrate all existing cytometry analysis techniques (e.g. manual gating, automated gating and dimension reduction)
+<img src="FlowCyto.png" width="90%" border="1"/>
+---
+# Specialized tools for Bioinformatics
+## CytoExploreR
+
+---
+# Basic R Operations
+```{r, echo = TRUE, comment=""}
+1+1  #Simple Arithmetic
+2 + 3 * 4 #PEMDAS also applies 
+3 ^ 2 #Exponentiation 
+exp(1) #Basic mathematical functions are available
+
+```
+---
+# Basic R Operations
+```{r, echo = TRUE, comment=""}
+sqrt(10)
+
+pi #constants are also defined within R
+
+2+pi*43 #Some random operation
+```
+---
+
+# Variables in R
+- Variables are names for values. Created variables can be found in the workspace pane.
+- Numeric
+  + Store floating point values
+- Boolean (True or False)
+  + TRUE or FALSE are reserved values, can not be used to name variables
+- Strings
+  + Essentially text, sequences of characters
+- A variable can be determined with the `<-` operator
+---
+# Variables in R
+- Shortcut for the `<-` operator, `Alt + -`
+- `x <- 1` Assigns 1 to a variable called `x`
+- `y <- 3` Assigns 3 to a variable called `y`
+- `z <- 4` Assigns 4 to a variable called `z`
+- `x*y*x` We can perform operations with variables, if allowed
+
+```{r, comment=""}
+x <- 1
+y <- 3
+z <- 4
+x * y * z
+```
+
+---
+# Variables in R
+- Variables under the same name can overwrite each other when called later
+
+```{r, comment="", echo=TRUE}
+x <- 1
+x <- 3
+
+x == 1 #Is x still 1?
+x == 3 #Is x now 3?
+```
+---
+# Variables in R
+- Certain rules must be respected when naming variables
+- `letters_123. <- 4` Letters, numbers, dots, and underscores are allowed
+  + `letters.123_awesome`
+  + Can start with a dot but it should not be followed by a number `.letters123` 
+- Variables can't start with numbers `1illegalvariable` 
+- The `%` character isn't allowed `another%badvariable` 
+- Starting with `_` isn't valid `_lastbadvariable` 
+- Variables can hold Numeric, Boolean and String values the same way
+  + `x <- 23`
+  + `y <- "I love this variable"`
+
+---
+# Vectors
+- In `R` a vector is a collection of numbers, individual numbers are elements of the vector
+```{r, comment="", echo=TRUE}
+myvector <- c(10,20,30,40,50)
+
+myvector + 1
+
+myvector + myvector
+
+length(myvector)
+
+c(myvector, myvector)
+```
+
+---
+# Vectors
+- We can create and index vectors with `:`
+- Indexing means accessing specific elements in the vector
+```{r, comment="", echo=TRUE}
+autovector <- 1:10
+autovector
+autovector[1]
+items <- c("spam", "eggs", "beans", "bacon", "sausage")
+items[1:4]
+
+```
+---
+# Vectors
+```{r, comment="", echo=TRUE}
+plot(autovector, autovector*autovector)
+```
+---
+# Functions
+- Functions are things that `R` do for us: calculate, manipulate data, read and write to files, produce plots.
+- `R` contains many functions and we can also build our own (more advanced stuff)
+```{r, comment="", echo=TRUE}
+myvector
+sum(myvector)
+rep(42,10) #Repeats the number 42, 10 times
+rep(c(1,2,3),10) #Functions work from the inner brackets to the outer ones. In this case it creates a vector first, and then proceeds to repeat it  10 times
+```
+---
+#Working with Data
+## Data frames and the Tidyverse
+- Data frames is the `R` name for tabular data. Essentially tables.
+- Generally we want each row in a data frame to represent a unit of observation and each column to contain a different type of information
+- As a beginner, it is advisable to prepare your tabular data in Excel prior to working in `RStudio`
+- We will work with data using a package called `Tidyverse` which contains many popular tools used for data analysis in `R`
+- To install `Tidyverse` in your computer write `install.packages("tidyverse")`
+- To load `Tidyverse` write `library(tidyverse)`
+- Whenever you close `RStudio` make sure to run the `library(tidyverse)` function the first time you log back in
+---
+#Working with Data
+## Opening a csv file
+- Save the file you wish to work with in the directory where you saved your project
+- This will ensure you don't have you search everywhere in your computer and makes it easy for `RStudio` to access them
+<img align="center" src="directory.png" width="600" height="400"/>
+---
+#Working with Data
+## Opening a csv file
+```{r, comment="", echo=TRUE, tidy=TRUE, message=FALSE}
+geo <- readr::read_csv("geo.csv")
+geo
+```
+---
+#Working with Data
+## Exploring the data
+- We can extract details from the dataset
+```{r, comment="", echo=TRUE, tidy=TRUE, message=FALSE}
+nrow(geo) #Number of observations
+ncol(geo) #Number of columns
+colnames (geo) #Names of the columns
+```
+---
+#Working with Data
+## Exploring the data
+```{r, comment="", echo=TRUE, tidy=TRUE, message=FALSE}
+summary(geo) #Descriptive statistics (if available) for each column
+```
+---
+#Working with Data
+## Indexing data frames
+- The syntax to subset (selecting parts of a table) data frames is `[row,column]`
+```{r, comment="", echo=TRUE, tidy=TRUE, message=FALSE}
+geo[4,2] #Here were are taking row 4, column 2.
+geo[4,"region"] #We can also use the name of the column instead. Be aware that this is case-sensitive
+```
+---
+#Working with Data
+## Indexing data frames
+```{r, comment="", echo=TRUE, tidy=TRUE, message=FALSE}
+geo[4,] #We can choose a row and all the columns that are associated with it by leaving an empty space
+head(geo[,"region"]) #Similarly we can choose an entire column alone with all its rows
+```
+---
+#Working with Data
+## Indexing data frames
+```{r, comment="", echo=TRUE, tidy=TRUE, message=FALSE}
+geo[c(1,50,180),] #We can index different rows in one line
+head(geo[2:8,]) #Selecting a sequence of rows is called slicing
+```
+---
+#Working with Data
+## Logical indexing
+- Instead of specifying rows and columns we can use logic to determine `TRUE` values that fit our request
+- The `tidyverse` package provides the function `filter()` which allows this to happen in a much easier way than using pure `R`
+- Some operators available include
+  + `x==y` Equal to
+  + `x!=y` Not equal to
+  + `x<y` Less than
+  + `x>y` Greater than
+  + `x<=y` Less than or equal to
+  + `x>=y` Greater than or equal to
+  
+---
+#Working with Data
+## Logical indexing
+- We want countries that are positioned on latitudes that are negative, meaning southern
+```{r, comment="", echo=TRUE, tidy=TRUE, message=FALSE}
+dplyr::filter(geo, lat< 0) #Select the dataframe first, then the condition, negative lat values
+```
+---
+#Simple Graph Creation
+
+- `Tidyverse` contains the package `ggplot2` which can assist in creating custom made plots
+- Three things to consider
+  + A dataframe
+  + How the columns of the dataframe can be translated into positions, colors, size, and shapes of graphical elements. The "aesthetics"
+  + The actual graphical element to display (scatterplot, lineplot, barplots)
+```{r, message=FALSE}
+geo <- readr::read_csv("geo.csv")
+gap <- readr::read_csv("gap-minder.csv")
+gap_geo <- dplyr::left_join(gap, geo, by="name")
+head(gap_geo)
+```
+---
+# Simple Graphs
+```{r, comment="", echo=TRUE, tidy=TRUE, message=FALSE, warning=FALSE}
+
+ggplot2::ggplot(gap_geo, ggplot2::aes(x=year, y=life_exp)) +
+    ggplot2::geom_point()
+```
+---
+# Simple Graphs
+Let's trying adding more `Aesthetics(R)`
+```{r, comment="", echo=TRUE, tidy=TRUE, message=FALSE, warning=FALSE}
+
+ggplot2::ggplot(gap_geo, ggplot2::aes(x=year, y=life_exp, color = region, size = population)) +
+    ggplot2::geom_point()
+```
+---
+# Simple Graphs
+-Boxplots look cool in publications (not these ones though)
+-The year aesthetic separates the boxplots by year, otherwise it would be one single boxplot
+```{r, comment="", echo=TRUE, tidy=TRUE, message=FALSE, warning=FALSE}
+
+ggplot2::ggplot(gap_geo, ggplot2::aes(x=year, y=life_exp, color = region, group=year)) +
+    ggplot2::geom_boxplot()
+```
+#Source https://monashdatafluency.github.io/r-intro-2/plotting-with-ggplot2.html#elements-of-a-ggplot
