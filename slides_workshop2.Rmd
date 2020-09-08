@@ -228,3 +228,6 @@ gapminder %>%
 - However most real data doesn't start off like that and requires some reshaping to become tidy
 - `tidyr` is for reshaping data. It is less commonly use than `dplyr` but is still good to know how to use both
 
+![](http://www.sthda.com/sthda/RDoc/images/tidyr.png)
+---
+
