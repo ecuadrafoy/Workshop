@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Data Wrangling with R</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Ernesto Cuadra Foy" />
+    <link href="slides_workshop2_files/remark-css-0.0.1/default.css" rel="stylesheet" />
+    <link href="slides_workshop2_files/remark-css-0.0.1/metropolis.css" rel="stylesheet" />
+    <link href="slides_workshop2_files/remark-css-0.0.1/metropolis-fonts.css" rel="stylesheet" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Data Wrangling with R
+## How to work with the structures of your data
+### Ernesto Cuadra Foy
+### Date
+
+---
+
+
+
+# Outline 
+
+- Introduction
+- Wrangle the data with `dplyr`
+- Cleaning the data with `tidyr`
+---
+# The importance of tidying your data
+- Making sure your data is ready before analysis could save you a lot of headaches
+
+&gt; Data scientists according to interviews and expert estimates spend from 50% to 80% of their time mired in the mundane labour of collecting and preparing data, before it can be explored for useful information - New York Times (2014)
+
+- Biological science data isn't much of an issue
+  - Already tabulated
+  - Working with images could be tricky
+  - Not as diverse
+
+- The need for tools that can deal with tons of data has led to the creation of packages that are simple to use and understand for humans
+  - High-level programming uses natural language elements that are more understandable
+- The process of removing or adding columns, edit and clean the data is called **data wrangling**
+
+---
+# What is Tidy Data?
+- The concept of tidy data is very simple, put variables in columns and observations in rows
+
+&lt;img src="tidy_data.png" width="60%" border="1"/&gt;
+
+- Making data tidy is critical, instead of building analyses around whatever weird format the data is in
+- Once the data is tidy, we can use a growing assortment of powerful analytical and visualization tools
+---
+# What is Tidy Data?
+## The Tidyverse ecosystem
+&lt;img src="tidyverse_wickham_pres.jpg" width="80%" border="1"/&gt;
+
+---
+# Setup
+
+- Start a new session, or open the previous one
+- Open a new R script file
+- Load the `tidyverse` package
+
+```r
+## install.packages("tidyverse")
+## library(tidyverse)
+```
+- We will work with the Gapminder data. You can download the file from the github repository. Make sure to add it to your current session
+-Or you can take the url directly from github and write it to the `read_csv()` function. Remember to put it it between quotes
+---
+
+# Exploring the Gapminder dataframe
+
+```r
+gapminder &lt;- read_csv("gapminder.csv")
+head(gapminder)  # shows the top 6 using head(gapminder,10) would show the top 10 instead
+```
+
+```
+# A tibble: 6 x 6
+  country      year      pop continent lifeExp gdpPercap
+  &lt;chr&gt;       &lt;dbl&gt;    &lt;dbl&gt; &lt;chr&gt;       &lt;dbl&gt;     &lt;dbl&gt;
+1 Afghanistan  1952  8425333 Asia         28.8      779.
+2 Afghanistan  1957  9240934 Asia         30.3      821.
+3 Afghanistan  1962 10267083 Asia         32.0      853.
+4 Afghanistan  1967 11537966 Asia         34.0      836.
+5 Afghanistan  1972 13079460 Asia         36.1      740.
+6 Afghanistan  1977 14880372 Asia         38.4      786.
+```
+
+```r
+tail(gapminder)  # shows the last 6
+```
+
+```
+# A tibble: 6 x 6
+  country   year      pop continent lifeExp gdpPercap
+  &lt;chr&gt;    &lt;dbl&gt;    &lt;dbl&gt; &lt;chr&gt;       &lt;dbl&gt;     &lt;dbl&gt;
+1 Zimbabwe  1982  7636524 Africa       60.4      789.
+2 Zimbabwe  1987  9216418 Africa       62.4      706.
+3 Zimbabwe  1992 10704340 Africa       60.4      693.
+4 Zimbabwe  1997 11404948 Africa       46.8      792.
+5 Zimbabwe  2002 11926563 Africa       40.0      672.
+6 Zimbabwe  2007 12311143 Africa       43.5      470.
+```
+---
+# Exploring the Gapminder dataframe
+-Overall statistical overview of the Gapminder dataset
+
+```r
+summary(gapminder)
+```
+
+```
+   country               year           pop             continent        
+ Length:1704        Min.   :1952   Min.   :6.001e+04   Length:1704       
+ Class :character   1st Qu.:1966   1st Qu.:2.794e+06   Class :character  
+ Mode  :character   Median :1980   Median :7.024e+06   Mode  :character  
+                    Mean   :1980   Mean   :2.960e+07                     
+                    3rd Qu.:1993   3rd Qu.:1.959e+07                     
+                    Max.   :2007   Max.   :1.319e+09                     
+    lifeExp        gdpPercap       
+ Min.   :23.60   Min.   :   241.2  
+ 1st Qu.:48.20   1st Qu.:  1202.1  
+ Median :60.71   Median :  3531.8  
+ Mean   :59.47   Mean   :  7215.3  
+ 3rd Qu.:70.85   3rd Qu.:  9325.5  
+ Max.   :82.60   Max.   :113523.1  
+```
+---
+# *dplyr()* Basics
+- We saw some functions in the previous workshop, but here we will list the most important 
+- `filter()`: picks observations by their values. Subset by **rows**
+- `select()`: pick variables by their names. Subset by **columns**
+- `mutate()`: create new variables with functions of existing variables. **Create** new columns
+- `summarise()`: collapse many values down to a single summary. 
+- `arrange()` : reorder rows, ascending or descending
+- All these functions work similarly
+  - first argument is the dataframe: `filter(dataframe,)`
+  - Subsequent arguments describe what to do. Call specific columns, use logical expressions, etc
+  - The final result is a new dataframe
+---
+# *dplyr()* Basics
+## The `filter()` function
+- We saw filter being used previously. This function will select *rows* by evaluating a certain logical expression
+- Visually this is what `filter()` is doing
+
+![](rstudio-cheatsheet-filter.png)
+---
+# *dplyr()* Basics
+## The `filter()` function
+- Here we apply two conditions: only countries that have Peru and Mexico in their rows and when life expectancy was less than 60 years old
+
+```r
+filter(gapminder, country %in% c("Mexico", "Peru"), lifeExp &lt; 60)
+```
+
+```
+# A tibble: 9 x 6
+  country  year      pop continent lifeExp gdpPercap
+  &lt;chr&gt;   &lt;dbl&gt;    &lt;dbl&gt; &lt;chr&gt;       &lt;dbl&gt;     &lt;dbl&gt;
+1 Mexico   1952 30144317 Americas     50.8     3478.
+2 Mexico   1957 35015548 Americas     55.2     4132.
+3 Mexico   1962 41121485 Americas     58.3     4582.
+4 Peru     1952  8025700 Americas     43.9     3759.
+5 Peru     1957  9146100 Americas     46.3     4245.
+6 Peru     1962 10516500 Americas     49.1     4957.
+7 Peru     1967 12132200 Americas     51.4     5788.
+8 Peru     1972 13954700 Americas     55.4     5938.
+9 Peru     1977 15990099 Americas     58.4     6281.
+```
+---
+# *dplyr()* Basics
+## The `select()` function
+- `select()` is used to subset the data on variables or columns. 
+- Visually this is what `select()` is doing
+![](rstudio-cheatsheet-select.png)
+---
+# *dplyr()* Basics
+## The `select()` function
+
+```r
+select(gapminder, year, country, lifeExp)
+```
+
+```
+# A tibble: 1,704 x 3
+    year country     lifeExp
+   &lt;dbl&gt; &lt;chr&gt;         &lt;dbl&gt;
+ 1  1952 Afghanistan    28.8
+ 2  1957 Afghanistan    30.3
+ 3  1962 Afghanistan    32.0
+ 4  1967 Afghanistan    34.0
+ 5  1972 Afghanistan    36.1
+ 6  1977 Afghanistan    38.4
+ 7  1982 Afghanistan    39.9
+ 8  1987 Afghanistan    40.8
+ 9  1992 Afghanistan    41.7
+10  1997 Afghanistan    41.8
+# ... with 1,694 more rows
+```
+---
+# *dplyr()* Basics
+## Combining `select()` and `filter()`
+- We can combine both functions to produce custom tables that reflect our needs
+
+```r
+gap_cambodia  &lt;- filter(gapminder, country == "Cambodia")
+gap_cambodia  &lt;- select(gap_cambodia, -continent, -lifeExp) 
+head(gap_cambodia)
+```
+
+```
+# A tibble: 6 x 4
+  country   year     pop gdpPercap
+  &lt;chr&gt;    &lt;dbl&gt;   &lt;dbl&gt;     &lt;dbl&gt;
+1 Cambodia  1952 4693836      368.
+2 Cambodia  1957 5322536      434.
+3 Cambodia  1962 6083619      497.
+4 Cambodia  1967 6960067      523.
+5 Cambodia  1972 7450606      422.
+6 Cambodia  1977 6978607      525.
+```
+- As we add more functions it becomes cumbersome to keep track of all of them.
+- The pipe `%&gt;%` aims to simplify this by stringing several function operations in a single one
+---
+# *dplyr()* Basics
+## Using `%&gt;%` 
+- Shortcuts for the pipe operator are Ctrl + Shift + M for Windows and Cmd + Shift + M for Mac
+- In using the pipe operator, you start with the data before you say what you are going to do.
+- Converting our previous example using `%&gt;%` means the same as saying:
+  - Take the `gapminder` data, filter only the Countries that are equal to Cambodia, then do not select the Columns `continent` or `lifeEx`. Then save the results in the variable `gap_cambodia`
+
+```r
+gap_cambodia  &lt;- gapminder %&gt;% 
+  filter(country == "Cambodia") %&gt;%
+  select(-continent, -lifeExp)
+```
+---
+# *dplyr()* Basics
+## The `mutate()` function 
+- If we need to add a column using data from other columns, we can use the `mutate()` function to accomplish that.
+![](rstudio-cheatsheet-mutate.png)
+---
+# *dplyr()* Basics
+## The `mutate()` function 
+- Calculate each country's annual GDP which is the multiplication of population by GDP per capita
+- We create a new column called `gdp`
+- The variable was not saved anywhere.
+- The `head()` function at the end limits the data displayed in our output
+
+```r
+gapminder %&gt;% 
+  mutate(gdp = pop * gdpPercap) %&gt;% head()
+```
+
+```
+# A tibble: 6 x 7
+  country      year      pop continent lifeExp gdpPercap          gdp
+  &lt;chr&gt;       &lt;dbl&gt;    &lt;dbl&gt; &lt;chr&gt;       &lt;dbl&gt;     &lt;dbl&gt;        &lt;dbl&gt;
+1 Afghanistan  1952  8425333 Asia         28.8      779.  6567086330.
+2 Afghanistan  1957  9240934 Asia         30.3      821.  7585448670.
+3 Afghanistan  1962 10267083 Asia         32.0      853.  8758855797.
+4 Afghanistan  1967 11537966 Asia         34.0      836.  9648014150.
+5 Afghanistan  1972 13079460 Asia         36.1      740.  9678553274.
+6 Afghanistan  1977 14880372 Asia         38.4      786. 11697659231.
+```
+---
+# *dplyr()* Basics
+## The `mutate()` function 
+- Select Asian and European countries, between the years 2005 and 2007 inclusively. 
+- Calculate the population in the thousands and select only columns country, year, and the new column
+
+```r
+gapminder %&gt;%
+  filter(continent %in% c("Asia", "Europe"),
+         between(year, 2005, 2007)) %&gt;%
+  mutate(pop_thousands = pop/1000) %&gt;%
+  select(country, year, pop_thousands) %&gt;% head()
+```
+
+```
+# A tibble: 6 x 3
+  country      year pop_thousands
+  &lt;chr&gt;       &lt;dbl&gt;         &lt;dbl&gt;
+1 Afghanistan  2007        31890.
+2 Albania      2007         3601.
+3 Austria      2007         8200.
+4 Bahrain      2007          709.
+5 Bangladesh   2007       150448.
+6 Belgium      2007        10392.
+```
+---
+# *dplyr()* Basics
+## The `group_by()` function 
+- The `group_by()` function takes and existing table and converts it into a grouped table where operations are performed "by group". Use `ungroup()` to remove grouping. 
+- The function creates a grouping variable
+![](rstudio-cheatsheet-group_by.png)
+---
+# *dplyr()* Basics
+## The `group_by()` function 
+- We set the grouping variable to `continent` then create a new column called `cont_pop` that will add upp all country populations by their associated continents
+- At the end we have the sum of the total population for each continent from which that country is part of in 2002
+
+```r
+gapminder %&gt;%
+  filter(year == 2002) %&gt;%
+  group_by(continent) %&gt;% 
+  mutate(cont_pop = sum(pop)) %&gt;% head()
+```
+
+```
+# A tibble: 6 x 7
+# Groups:   continent [5]
+  country      year      pop continent lifeExp gdpPercap   cont_pop
+  &lt;chr&gt;       &lt;dbl&gt;    &lt;dbl&gt; &lt;chr&gt;       &lt;dbl&gt;     &lt;dbl&gt;      &lt;dbl&gt;
+1 Afghanistan  2002 25268405 Asia         42.1      727. 3601802203
+2 Albania      2002  3508512 Europe       75.7     4604.  578223869
+3 Algeria      2002 31287142 Africa       71.0     5288.  833723916
+4 Angola       2002 10866106 Africa       41.0     2773.  833723916
+5 Argentina    2002 38331121 Americas     74.3     8798.  849772762
+6 Australia    2002 19546792 Oceania      80.4    30688.   23454829
+```
+---
+# *dplyr()* Basics
+## Distilling information with `summarize()`
+- If we don't want the other columns and we just want their population total, we use the `summarize()` function
+- `summarize()` will create a new dataframe. It will have one, or more rows for each combination of grouping variables. It will contain one column for each grouping varialbe and one column for each of the summary statistics specified
+- Some useful summary statistics that can be used in `summarize()` include `mean()`,`median()`,`sd()`,`IQR()`,`min()`,`max()`,`n()`. 
+![](rstudio-cheatsheet-summarise.png)
+---
+# *dplyr()* Basics
+## Distilling information with `summarize()`
+- The following will filter the population in each continent in 2002 by adding the individual countries that fall into that group. 
+- We apply an ungroup to remove the grouping variable so that we can do more work with it later on. 
+
+```r
+gapminder %&gt;%
+  filter(year == 2002) %&gt;%
+  group_by(continent) %&gt;% 
+  summarize(cont_pop = sum(pop)) %&gt;% ungroup() %&gt;% head()
+```
+
+```
+# A tibble: 5 x 2
+  continent   cont_pop
+  &lt;chr&gt;          &lt;dbl&gt;
+1 Africa     833723916
+2 Americas   849772762
+3 Asia      3601802203
+4 Europe     578223869
+5 Oceania     23454829
+```
+---
+# *dplyr()* Basics
+## `summarize()` and then `arrange()` its order
+- We can group by and do summary for more than one column
+- We then want to see the table in ascending order for `year`. Currently it is ordered alphabetically
+
+```r
+gapminder %&gt;%
+  group_by(continent, year) %&gt;%
+  summarize(cont_pop = sum(pop))%&gt;%
+  ungroup() %&gt;%
+  arrange(year) %&gt;%
+  head() 
+```
+
+```
+# A tibble: 6 x 3
+  continent  year    cont_pop
+  &lt;chr&gt;     &lt;dbl&gt;       &lt;dbl&gt;
+1 Africa     1952  237640501 
+2 Americas   1952  345152446 
+3 Asia       1952 1395357352.
+4 Europe     1952  418120846 
+5 Oceania    1952   10686006 
+6 Africa     1957  264837738 
+```
+---
+# *dplyr()* Basics
+## Example
+- What is the maximum GDP per continent across all years?
+
+```r
+gapminder %&gt;%
+  group_by(continent, year) %&gt;% #Select grouping variables
+  mutate(gdp = pop * gdpPercap) %&gt;% #Create a new column
+  summarize(max_gdp = max(gdp)) %&gt;% #Show only the columns based on grouping variables and a statistical test
+  arrange(year) %&gt;% #arrange by the year
+  head()
+```
+
+```
+# A tibble: 6 x 3
+# Groups:   continent [5]
+  continent  year max_gdp
+  &lt;chr&gt;     &lt;dbl&gt;   &lt;dbl&gt;
+1 Africa     1952 6.74e10
+2 Americas   1952 2.20e12
+3 Asia       1952 2.78e11
+4 Europe     1952 5.03e11
+5 Oceania    1952 8.73e10
+6 Africa     1957 8.86e10
+```
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create();
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
