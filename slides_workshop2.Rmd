@@ -186,7 +186,7 @@ gapminder %>%
 - Some useful summary statistics that can be used in `summarize()` include `mean()`,`median()`,`sd()`,`IQR()`,`min()`,`max()`,`n()`. 
 ![](rstudio-cheatsheet-summarise.png)
 ---
-# *dplyr()* Basics
+# *dplyr()* 
 ## Distilling information with `summarize()`
 - The following will filter the population in each continent in 2002 by adding the individual countries that fall into that group. 
 - We apply an ungroup to remove the grouping variable so that we can do more work with it later on. 
@@ -197,7 +197,7 @@ gapminder %>%
   summarize(cont_pop = sum(pop)) %>% ungroup() %>% head()
 ```
 ---
-# *dplyr()* Basics
+# *dplyr()* 
 ## `summarize()` and then `arrange()` its order
 - We can group by and do summary for more than one column
 - We then want to see the table in ascending order for `year`. Currently it is ordered alphabetically
@@ -210,7 +210,7 @@ gapminder %>%
   head() 
 ```
 ---
-# *dplyr()* Basics
+# *dplyr()* 
 ## Example
 - What is the maximum GDP per continent across all years?
 ```{r, echo = TRUE, comment=""}
@@ -222,3 +222,9 @@ gapminder %>%
   arrange(year) %>% #arrange by the year
   head()
 ```
+---
+# Reshaping data with *tidyr()* 
+- Now we have some experience with data that is in a tidy way.
+- However most real data doesn't start off like that and requires some reshaping to become tidy
+- `tidyr` is for reshaping data. It is less commonly use than `dplyr` but is still good to know how to use both
+
