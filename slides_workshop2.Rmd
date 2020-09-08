@@ -1,0 +1,224 @@
+---
+title: "Data Wrangling with R"
+subtitle: "How to work with the structures of your data"
+author: "Ernesto Cuadra Foy"
+date: "Date"
+output:
+  xaringan::moon_reader:
+    css: [default, metropolis, metropolis-fonts]
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+```{r load-packages, include=FALSE}
+library(tidyverse)
+```
+# Outline 
+
+- Introduction
+- Wrangle the data with `dplyr`
+- Cleaning the data with `tidyr`
+---
+# The importance of tidying your data
+- Making sure your data is ready before analysis could save you a lot of headaches
+
+> Data scientists according to interviews and expert estimates spend from 50% to 80% of their time mired in the mundane labour of collecting and preparing data, before it can be explored for useful information - New York Times (2014)
+
+- Biological science data isn't much of an issue
+  - Already tabulated
+  - Working with images could be tricky
+  - Not as diverse
+
+- The need for tools that can deal with tons of data has led to the creation of packages that are simple to use and understand for humans
+  - High-level programming uses natural language elements that are more understandable
+- The process of removing or adding columns, edit and clean the data is called **data wrangling**
+
+---
+# What is Tidy Data?
+- The concept of tidy data is very simple, put variables in columns and observations in rows
+
+<img src="tidy_data.png" width="60%" border="1"/>
+
+- Making data tidy is critical, instead of building analyses around whatever weird format the data is in
+- Once the data is tidy, we can use a growing assortment of powerful analytical and visualization tools
+---
+# What is Tidy Data?
+## The Tidyverse ecosystem
+<img src="tidyverse_wickham_pres.jpg" width="80%" border="1"/>
+
+---
+# Setup
+
+- Start a new session, or open the previous one
+- Open a new R script file
+- Load the `tidyverse` package
+```{r, echo = TRUE, comment=""}
+## install.packages("tidyverse")
+## library(tidyverse)
+```
+- We will work with the Gapminder data. You can download the file from the github repository. Make sure to add it to your current session
+-Or you can take the url directly from github and write it to the `read_csv()` function. Remember to put it it between quotes
+---
+
+# Exploring the Gapminder dataframe
+```{r, comment="", echo=TRUE, tidy=TRUE, message=FALSE}
+gapminder <- read_csv("gapminder.csv")
+head(gapminder) # shows the top 6 using head(gapminder,10) would show the top 10 instead
+tail(gapminder) # shows the last 6
+```
+---
+# Exploring the Gapminder dataframe
+-Overall statistical overview of the Gapminder dataset
+```{r, echo = TRUE, comment=""}
+summary(gapminder)
+```
+---
+# *dplyr()* Basics
+- We saw some functions in the previous workshop, but here we will list the most important 
+- `filter()`: picks observations by their values. Subset by **rows**
+- `select()`: pick variables by their names. Subset by **columns**
+- `mutate()`: create new variables with functions of existing variables. **Create** new columns
+- `summarise()`: collapse many values down to a single summary. 
+- `arrange()` : reorder rows, ascending or descending
+- All these functions work similarly
+  - first argument is the dataframe: `filter(dataframe,)`
+  - Subsequent arguments describe what to do. Call specific columns, use logical expressions, etc
+  - The final result is a new dataframe
+---
+# *dplyr()* Basics
+## The `filter()` function
+- We saw filter being used previously. This function will select *rows* by evaluating a certain logical expression
+- Visually this is what `filter()` is doing
+
+![](rstudio-cheatsheet-filter.png)
+---
+# *dplyr()* Basics
+## The `filter()` function
+- Here we apply two conditions: only countries that have Peru and Mexico in their rows and when life expectancy was less than 60 years old
+```{r, echo = TRUE, comment=""}
+filter(gapminder, country %in% c("Mexico", "Peru"), lifeExp < 60)
+```
+---
+# *dplyr()* Basics
+## The `select()` function
+- `select()` is used to subset the data on variables or columns. 
+- Visually this is what `select()` is doing
+![](rstudio-cheatsheet-select.png)
+---
+# *dplyr()* Basics
+## The `select()` function
+```{r, echo = TRUE, comment=""}
+select(gapminder, year, country, lifeExp)
+```
+---
+# *dplyr()* Basics
+## Combining `select()` and `filter()`
+- We can combine both functions to produce custom tables that reflect our needs
+```{r, echo = TRUE, comment=""}
+gap_cambodia  <- filter(gapminder, country == "Cambodia")
+gap_cambodia  <- select(gap_cambodia, -continent, -lifeExp) 
+head(gap_cambodia)
+```
+- As we add more functions it becomes cumbersome to keep track of all of them.
+- The pipe `%>%` aims to simplify this by stringing several function operations in a single one
+---
+# *dplyr()* Basics
+## Using `%>%` 
+- Shortcuts for the pipe operator are Ctrl + Shift + M for Windows and Cmd + Shift + M for Mac
+- In using the pipe operator, you start with the data before you say what you are going to do.
+- Converting our previous example using `%>%` means the same as saying:
+  - Take the `gapminder` data, filter only the Countries that are equal to Cambodia, then do not select the Columns `continent` or `lifeEx`. Then save the results in the variable `gap_cambodia`
+```{r, echo = TRUE, comment=""}
+gap_cambodia  <- gapminder %>% 
+  filter(country == "Cambodia") %>%
+  select(-continent, -lifeExp)
+```
+---
+# *dplyr()* Basics
+## The `mutate()` function 
+- If we need to add a column using data from other columns, we can use the `mutate()` function to accomplish that.
+![](rstudio-cheatsheet-mutate.png)
+---
+# *dplyr()* Basics
+## The `mutate()` function 
+- Calculate each country's annual GDP which is the multiplication of population by GDP per capita
+- We create a new column called `gdp`
+- The variable was not saved anywhere.
+- The `head()` function at the end limits the data displayed in our output
+```{r, echo = TRUE, comment=""}
+gapminder %>% 
+  mutate(gdp = pop * gdpPercap) %>% head()
+```
+---
+# *dplyr()* Basics
+## The `mutate()` function 
+- Select Asian and European countries, between the years 2005 and 2007 inclusively. 
+- Calculate the population in the thousands and select only columns country, year, and the new column
+```{r, echo = TRUE, comment=""}
+gapminder %>%
+  filter(continent %in% c("Asia", "Europe"),
+         between(year, 2005, 2007)) %>%
+  mutate(pop_thousands = pop/1000) %>%
+  select(country, year, pop_thousands) %>% head()
+```
+---
+# *dplyr()* Basics
+## The `group_by()` function 
+- The `group_by()` function takes and existing table and converts it into a grouped table where operations are performed "by group". Use `ungroup()` to remove grouping. 
+- The function creates a grouping variable
+![](rstudio-cheatsheet-group_by.png)
+---
+# *dplyr()* Basics
+## The `group_by()` function 
+- We set the grouping variable to `continent` then create a new column called `cont_pop` that will add upp all country populations by their associated continents
+- At the end we have the sum of the total population for each continent from which that country is part of in 2002
+```{r, echo = TRUE, comment=""}
+gapminder %>%
+  filter(year == 2002) %>%
+  group_by(continent) %>% 
+  mutate(cont_pop = sum(pop)) %>% head()
+```
+---
+# *dplyr()* Basics
+## Distilling information with `summarize()`
+- If we don't want the other columns and we just want their population total, we use the `summarize()` function
+- `summarize()` will create a new dataframe. It will have one, or more rows for each combination of grouping variables. It will contain one column for each grouping varialbe and one column for each of the summary statistics specified
+- Some useful summary statistics that can be used in `summarize()` include `mean()`,`median()`,`sd()`,`IQR()`,`min()`,`max()`,`n()`. 
+![](rstudio-cheatsheet-summarise.png)
+---
+# *dplyr()* Basics
+## Distilling information with `summarize()`
+- The following will filter the population in each continent in 2002 by adding the individual countries that fall into that group. 
+- We apply an ungroup to remove the grouping variable so that we can do more work with it later on. 
+```{r, echo = TRUE, comment=""}
+gapminder %>%
+  filter(year == 2002) %>%
+  group_by(continent) %>% 
+  summarize(cont_pop = sum(pop)) %>% ungroup() %>% head()
+```
+---
+# *dplyr()* Basics
+## `summarize()` and then `arrange()` its order
+- We can group by and do summary for more than one column
+- We then want to see the table in ascending order for `year`. Currently it is ordered alphabetically
+```{r, echo = TRUE, comment=""}
+gapminder %>%
+  group_by(continent, year) %>%
+  summarize(cont_pop = sum(pop))%>%
+  ungroup() %>%
+  arrange(year) %>%
+  head() 
+```
+---
+# *dplyr()* Basics
+## Example
+- What is the maximum GDP per continent across all years?
+```{r, echo = TRUE, comment=""}
+gapminder %>%
+  group_by(continent, year) %>% #Select grouping variables
+  mutate(gdp = pop * gdpPercap) %>% #Create a new column
+  summarize(max_gdp = max(gdp)) %>% #Show only the columns based on grouping variables 
+  # and a summary statistic
+  arrange(year) %>% #arrange by the year
+  head()
+```
