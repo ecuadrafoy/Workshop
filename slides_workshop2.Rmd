@@ -90,7 +90,7 @@ summary(gapminder)
 - We saw filter being used previously. This function will select *rows* by evaluating a certain logical expression
 - Visually this is what `filter()` is doing
 
-![](rstudio-cheatsheet-filter.png)
+![](http://ohi-science.org/data-science-training/img/rstudio-cheatsheet-filter.png)
 ---
 # *dplyr()* Basics
 ## The `filter()` function
@@ -103,7 +103,7 @@ filter(gapminder, country %in% c("Mexico", "Peru"), lifeExp < 60)
 ## The `select()` function
 - `select()` is used to subset the data on variables or columns. 
 - Visually this is what `select()` is doing
-![](rstudio-cheatsheet-select.png)
+![](http://ohi-science.org/data-science-training/img/rstudio-cheatsheet-select.png)
 ---
 # *dplyr()* Basics
 ## The `select()` function
@@ -137,7 +137,7 @@ gap_cambodia  <- gapminder %>%
 # *dplyr()* Basics
 ## The `mutate()` function 
 - If we need to add a column using data from other columns, we can use the `mutate()` function to accomplish that.
-![](rstudio-cheatsheet-mutate.png)
+![](http://ohi-science.org/data-science-training/img/rstudio-cheatsheet-mutate.png)
 ---
 # *dplyr()* Basics
 ## The `mutate()` function 
@@ -166,7 +166,7 @@ gapminder %>%
 ## The `group_by()` function 
 - The `group_by()` function takes and existing table and converts it into a grouped table where operations are performed "by group". Use `ungroup()` to remove grouping. 
 - The function creates a grouping variable
-![](rstudio-cheatsheet-group_by.png)
+![](http://ohi-science.org/data-science-training/img/rstudio-cheatsheet-group_by.png)
 ---
 # *dplyr()* Basics
 ## The `group_by()` function 
@@ -184,7 +184,7 @@ gapminder %>%
 - If we don't want the other columns and we just want their population total, we use the `summarize()` function
 - `summarize()` will create a new dataframe. It will have one, or more rows for each combination of grouping variables. It will contain one column for each grouping varialbe and one column for each of the summary statistics specified
 - Some useful summary statistics that can be used in `summarize()` include `mean()`,`median()`,`sd()`,`IQR()`,`min()`,`max()`,`n()`. 
-![](rstudio-cheatsheet-summarise.png)
+![](http://ohi-science.org/data-science-training/img/rstudio-cheatsheet-summarise.png)
 ---
 # *dplyr()* 
 ## Distilling information with `summarize()`
