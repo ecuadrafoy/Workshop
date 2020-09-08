@@ -145,7 +145,7 @@ summary(gapminder)
 - We saw filter being used previously. This function will select *rows* by evaluating a certain logical expression
 - Visually this is what `filter()` is doing
 
-![](rstudio-cheatsheet-filter.png)
+![](http://ohi-science.org/data-science-training/img/rstudio-cheatsheet-filter.png)
 ---
 # *dplyr()* Basics
 ## The `filter()` function
@@ -174,7 +174,7 @@ filter(gapminder, country %in% c("Mexico", "Peru"), lifeExp &lt; 60)
 ## The `select()` function
 - `select()` is used to subset the data on variables or columns. 
 - Visually this is what `select()` is doing
-![](rstudio-cheatsheet-select.png)
+![](http://ohi-science.org/data-science-training/img/rstudio-cheatsheet-select.png)
 ---
 # *dplyr()* Basics
 ## The `select()` function
@@ -240,7 +240,7 @@ gap_cambodia  &lt;- gapminder %&gt;%
 # *dplyr()* Basics
 ## The `mutate()` function 
 - If we need to add a column using data from other columns, we can use the `mutate()` function to accomplish that.
-![](rstudio-cheatsheet-mutate.png)
+![](http://ohi-science.org/data-science-training/img/rstudio-cheatsheet-mutate.png)
 ---
 # *dplyr()* Basics
 ## The `mutate()` function 
@@ -295,7 +295,7 @@ gapminder %&gt;%
 ## The `group_by()` function 
 - The `group_by()` function takes and existing table and converts it into a grouped table where operations are performed "by group". Use `ungroup()` to remove grouping. 
 - The function creates a grouping variable
-![](rstudio-cheatsheet-group_by.png)
+![](http://ohi-science.org/data-science-training/img/rstudio-cheatsheet-group_by.png)
 ---
 # *dplyr()* Basics
 ## The `group_by()` function 
@@ -327,9 +327,9 @@ gapminder %&gt;%
 - If we don't want the other columns and we just want their population total, we use the `summarize()` function
 - `summarize()` will create a new dataframe. It will have one, or more rows for each combination of grouping variables. It will contain one column for each grouping varialbe and one column for each of the summary statistics specified
 - Some useful summary statistics that can be used in `summarize()` include `mean()`,`median()`,`sd()`,`IQR()`,`min()`,`max()`,`n()`. 
-![](rstudio-cheatsheet-summarise.png)
+![](http://ohi-science.org/data-science-training/img/rstudio-cheatsheet-summarise.png)
 ---
-# *dplyr()* Basics
+# *dplyr()* 
 ## Distilling information with `summarize()`
 - The following will filter the population in each continent in 2002 by adding the individual countries that fall into that group. 
 - We apply an ungroup to remove the grouping variable so that we can do more work with it later on. 
@@ -352,7 +352,7 @@ gapminder %&gt;%
 5 Oceania     23454829
 ```
 ---
-# *dplyr()* Basics
+# *dplyr()* 
 ## `summarize()` and then `arrange()` its order
 - We can group by and do summary for more than one column
 - We then want to see the table in ascending order for `year`. Currently it is ordered alphabetically
@@ -378,7 +378,7 @@ gapminder %&gt;%
 6 Africa     1957  264837738 
 ```
 ---
-# *dplyr()* Basics
+# *dplyr()* 
 ## Example
 - What is the maximum GDP per continent across all years?
 
@@ -386,7 +386,8 @@ gapminder %&gt;%
 gapminder %&gt;%
   group_by(continent, year) %&gt;% #Select grouping variables
   mutate(gdp = pop * gdpPercap) %&gt;% #Create a new column
-  summarize(max_gdp = max(gdp)) %&gt;% #Show only the columns based on grouping variables and a statistical test
+  summarize(max_gdp = max(gdp)) %&gt;% #Show only the columns based on grouping variables 
+  # and a summary statistic
   arrange(year) %&gt;% #arrange by the year
   head()
 ```
@@ -403,6 +404,11 @@ gapminder %&gt;%
 5 Oceania    1952 8.73e10
 6 Africa     1957 8.86e10
 ```
+---
+# Reshaping data with *tidyr()* 
+- Now we have some experience with data that is in a tidy way.
+- However most real data doesn't start off like that and requires some reshaping to become tidy
+- `tidyr` is for reshaping data. It is less commonly use than `dplyr` but is still good to know how to use both
     </textarea>
 <style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
 <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
