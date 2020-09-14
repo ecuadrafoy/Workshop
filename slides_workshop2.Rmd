@@ -12,12 +12,17 @@ knitr::opts_chunk$set(echo = FALSE)
 ```
 ```{r load-packages, include=FALSE}
 library(tidyverse)
+library(knitr)
+library(rmarkdown)
+library(rlang)
 ```
 # Outline 
 
 - Introduction
-- Wrangle the data with `dplyr`
-- Cleaning the data with `tidyr`
+- Transforming data with `dplyr`
+- Wrangling data with `tidyr`
+- Creating our own functions
+- Iterating with for loops
 ---
 # The importance of tidying your data
 - Making sure your data is ready before analysis could save you a lot of headaches
@@ -227,7 +232,195 @@ gapminder %>%
 - Now we have some experience with data that is in a tidy way.
 - However most real data doesn't start off like that and requires some reshaping to become tidy
 - `tidyr` is for reshaping data. It is less commonly use than `dplyr` but is still good to know how to use both
+.center[![](http://www.sthda.com/sthda/RDoc/images/tidyr.png)]
 
-![](http://www.sthda.com/sthda/RDoc/images/tidyr.png)
+---
+# Reshaping data with *tidyr()* 
+What's the advantage of "tidying" up the data?
+1. Having a consistent data structure, makes it easy to learn the tools that work with it because they have an underlying uniformity
+  - Data is often stored in a way that makes entry easy
+2. Most built-in R functions work with vectors of values.
+  - Remember the principles of tidy data: each variable is its own column, each observation its own row, and each value must have its own cell
+.center[![](https://d33wubrfki0l68.cloudfront.net/6f1ddb544fc5c69a2478e444ab8112fb0eea23f8/91adc/images/tidy-1.png)]
+
+---
+# Spreading and Gathering
+- A common problem is a dataset where some of the column names are not names of variables bu values of a variable.
+  - Ex: Columns for several timepoints of one observation.
+  - Years spread into different columns
+- A dataset like this needs to gather those columns into a new pair of variables
+```{r, comment="", echo=TRUE, tidy=TRUE, message=FALSE}
+gapminder_wide <- read_csv('gapminder_wide.csv')
+colnames(gapminder_wide)
+```
+
+---
+# Spreading and Gathering
+- The function `gathering()` allows us to convert data from a **wide** format into a **long** format or vice versa.
+  - A long format is preferred when using `ggplot` visualizations
+- In our example, we wish to keep `country` and `continent` columns and create a new column that takes the spread variable into one. This is called a *key*. 
+- We want to create three columns that hold `gdpPercap`, `lifeExp` and `pop` as variables and 
 ---
 
+# Spreading and Gathering
+```{r, echo = TRUE, comment=""}
+gap_long <- gapminder_wide %>% 
+  gather(key = 'year', value = 'observations')
+head(gap_long)
+tail(gap_long, n=4)
+```
+---
+# Spreading and Gathering
+- Selecting all the columns one by one would take a lot of work, instead we can use the `starts_with()` function from `dplyr` that looks for variables that start with the desired character string. 
+```{r, echo = TRUE, comment=""}
+gap_long <- gapminder_wide %>% 
+  gather(key = year, value = observations, 
+         starts_with('pop'),
+         starts_with('lifeExp'),
+         starts_with('gdpPercap')) #listing all the columns to use in gather
+head(gap_long)
+```
+---
+# Spreading and Gathering
+- Alternatively we can accomplish almost the same by ignoring the `country` and `continent` columns from being included in the `gather()` function. 
+```{r, echo = TRUE, comment=""}
+gap_long <- gapminder_wide %>% 
+  gather(key   = year,
+         value = observations,
+         -continent, -country)
+head(gap_long)
+```
+---
+# Spreading and Gathering
+- Everything is looking good, however there is a little problem. The column `year` doesn't contain only the year but also the observation type. We can use `separate()` to split the character strings into variables.
+```{r, echo = TRUE, comment=""}
+gap_long <- gap_long %>%
+  separate(year, #pick the column we want to separate
+           into = c('obs_type', 'year'), #Creates two columns
+           sep = "_", # assigns the character separator
+           convert = TRUE)#this ensures that the year column is an integer rather than a character
+head(gap_long)
+```
+---
+# Spreading and Gathering
+- `spread()` is essentially the opposite of `gather()`. It transforms data from long to wide format. 
+```{r, echo = TRUE, comment=""}
+gap_wide_again <- gap_long %>% 
+  unite(col = var_names, obs_type, year, sep = "_") %>% 
+  #Unite(), the opposite of separate.
+  #unite obs_type and year into a new column called var_names. Separate by _
+  spread(key = var_names, value = observations)# Spread var_names out by key_value pair
+colnames(gap_wide_again)
+```
+---
+# An Introduction to Functions
+- One of the best ways to improve our code is to write functions. 
+- Functions allow you to automate common tasks in a more powerful and general way than copy-and-pasting.
+- You should consider writing a function whenever you’ve copied and pasted a block of code more than twice (i.e. you now have three copies of the same code)
+<center>
+<img src="https://www.learnbyexample.org/wp-content/uploads/r/r-function-syntax.png" width="50%" border="1"/>
+</center>
+Key Steps:
+1. Pick a *name* for the function
+2. List the inputs or *arguments*, to the functions
+3. Place the code you have developed in *body* of the function
+---
+# An Introduction to Functions
+```{r, echo = TRUE, comment=""}
+sum <- function(x,y){
+  return(x + y)
+}
+sum(4,3)
+sum(1,3)
+sum(5,6)
+```
+---
+# An Introduction to Functions
+- We can return multiple values by saving the results in a vector or list and then return it
+- The function will return the last statement by default
+```{r, echo = TRUE, comment=""}
+math_fn <- function(x,y){
+  add <- x + y
+  sub <- x - y
+  mul <- x * y
+  div <- x / y
+  c(addition = add, subtraction = sub,
+    multiplication = mul, divisions = div)
+}
+
+math_fn(20, 6)
+```
+---
+# Using functions in datasets
+- Let's look at the `mtcars` dataset that is included in R
+- The data was extracted from the 1974 Motor Trend US magazine, and comprises fuel consumption and 10 aspects of automobile design and performance for 32 automobiles
+```{r, echo = TRUE, comment=""}
+data(mtcars)
+str(mtcars)
+```
+---
+# Using functions in datasets
+- Group the cars by cylinder and calculate the mean for miles per gallon for all the cars with their respective cylinder. 
+```{r, echo = TRUE, comment=""}
+mtcars %>%
+  group_by(cyl) %>%
+  summarize(mean_mpg =mean(mpg))
+```
+---
+# Using functions in datasets
+- We can build a function that can perform these two steps in one, not just for this dataset but for any other we would like to execute a `group_by` followed by a `summarize`
+- The function takes arguments that will then be passed on to the body of the function. However because we want to keep it dynamic, we need to tweak a few things using `enquo()` from the `rlang` package. Arguments act as placeholders
+```{r, echo = TRUE, comment="", message=FALSE}
+#make sure to load the rlang library to use enquo library(rlang)
+simple_fn <- function(data., col_name){
+  col_name <- enquo(col_name)
+data. %>%
+  group_by(!!col_name) %>%
+  summarize(mean = mean(mpg))
+}
+mtcars %>% simple_fn(cyl)
+```
+---
+# Making it more dynamic
+- So far our function will take a dataset and a column of your choosing to provide you with grouped summary statistics
+- We can expand this and add more than just the mean of `mpg` 
+```{r, echo = TRUE, comment="", message=FALSE}
+
+dynamic_fn <- function(data., group_col, ...){
+  col_name <- enquo(group_col)
+  col_vars <- quos(...)
+data. %>%
+  group_by(!!col_name) %>%
+  summarise_at(vars(!!!col_vars), list(mean = mean,sd = sd, min = min, max = max))
+}
+mtcars %>% dynamic_fn(cyl, hp, wt, mpg) #Arguments are: column you wish to group by and then the columns you wish to do the summary statistics on
+```
+
+---
+# Using for loops 
+- Functions are great help for reducing duplication. Combine functions with *iteration* and then it helps us saving time on repeating the same thing on multiple inputs.
+- The `for` statement will iterate (perform an operation) over the items of a vector or a list. The items are iterated in the order that they appear in the vector
+<center>
+<img src="https://www.learnbyexample.org/wp-content/uploads/r/r-for-loop-syntax.png" width="50%" border="1"/>
+</center>
+```{r, echo = TRUE, comment=""}
+colours <- c("red", "green", "blue", "yellow")
+for (color in colours){
+  print(color)
+}
+```
+
+---
+# Using for loops
+```{r, echo = TRUE, comment=""}
+for (x in seq(from=2,to=14,by=2)) { #The seq() function creates a list from 2 to 14 going up every 2 numbers
+  print(x^2) #Each number in this generated list will be raised to the power of 2
+}
+```
+---
+# Combining functions and loops using the `purrr` package
+- Purrr introduces map functions as well as some new functions for manipulating lists.
+- `map()` will take a vector and a function, call the function once for each element of the vector, and return the results in a list
+<center>
+<img src="https://d33wubrfki0l68.cloudfront.net/f0494d020aa517ae7b1011cea4c4a9f21702df8b/2577b/diagrams/functionals/map.png" width="50%" border="1"/>
+</center>
