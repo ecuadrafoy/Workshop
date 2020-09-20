@@ -29,13 +29,11 @@ library(rlang)
 
 > Data scientists according to interviews and expert estimates spend from 50% to 80% of their time mired in the mundane labour of collecting and preparing data, before it can be explored for useful information - New York Times (2014)
 
-- Biological science data isn't much of an issue
-  - Already tabulated
-  - Working with images could be tricky
+- Life science data isn't much of an issue
+  - Most of it is already in tables
   - Not as diverse
-
+  - Working with images could be tricky
 - The need for tools that can deal with tons of data has led to the creation of packages that are simple to use and understand for humans
-  - High-level programming uses natural language elements that are more understandable
 - The process of removing or adding columns, edit and clean the data is called **data wrangling**
 
 ---
@@ -49,7 +47,7 @@ library(rlang)
 ---
 # What is Tidy Data?
 ## The Tidyverse ecosystem
-<img src="tidyverse_wickham_pres.jpg" width="80%" border="1"/>
+![](https://rstudio-education.github.io/tidyverse-cookbook/images/data-science-workflow.png)
 
 ---
 # Setup
@@ -62,18 +60,17 @@ library(rlang)
 ## library(tidyverse)
 ```
 - We will work with the Gapminder data. You can download the file from the github repository. Make sure to add it to your current session
--Or you can take the url directly from github and write it to the `read_csv()` function. Remember to put it it between quotes
+- Or you can take the url directly from github and write it to the `read_csv()` function. Remember to add quotation marks
 ---
 
 # Exploring the Gapminder dataframe
 ```{r, comment="", echo=TRUE, tidy=TRUE, message=FALSE}
 gapminder <- read_csv("gapminder.csv")
 head(gapminder) # shows the top 6 using head(gapminder,10) would show the top 10 instead
-tail(gapminder) # shows the last 6
 ```
 ---
 # Exploring the Gapminder dataframe
--Overall statistical overview of the Gapminder dataset
+- Overall statistical overview of the Gapminder dataset
 ```{r, echo = TRUE, comment=""}
 summary(gapminder)
 ```
@@ -86,8 +83,8 @@ summary(gapminder)
 - `summarise()`: collapse many values down to a single summary. 
 - `arrange()` : reorder rows, ascending or descending
 - All these functions work similarly
-  - first argument is the dataframe: `filter(dataframe,)`
-  - Subsequent arguments describe what to do. Call specific columns, use logical expressions, etc
+  - first argument is the dataframe: `filter(dataframe,...)`
+  - Subsequent arguments describe what to do. Call specific columns, use logical expressions, etc.
   - The final result is a new dataframe
 ---
 # *dplyr()* Basics
@@ -119,58 +116,46 @@ select(gapminder, year, country, lifeExp)
 # *dplyr()* Basics
 ## Combining `select()` and `filter()`
 - We can combine both functions to produce custom tables that reflect our needs
+- For this example, only **filter** rows that contain `Cambodia` and **select** the columns `Year`, `Country`, and `lifeExp`
 ```{r, echo = TRUE, comment=""}
-gap_cambodia  <- filter(gapminder, country == "Cambodia")
-gap_cambodia  <- select(gap_cambodia, -continent, -lifeExp) 
+gap_cambodia  <- filter(gapminder, country == "Cambodia") 
+gap_cambodia  <- select(gap_cambodia, year, country, lifeExp) 
 head(gap_cambodia)
 ```
-- As we add more functions it becomes cumbersome to keep track of all of them.
-- The pipe `%>%` aims to simplify this by stringing several function operations in a single one
+- As we add more functions, it becomes cumbersome to keep track of all of them.
+- We can solve this by using the pipe operator `%>%` 
 ---
 # *dplyr()* Basics
 ## Using `%>%` 
-- Shortcuts for the pipe operator are Ctrl + Shift + M for Windows and Cmd + Shift + M for Mac
-- In using the pipe operator, you start with the data before you say what you are going to do.
-- Converting our previous example using `%>%` means the same as saying:
-  - Take the `gapminder` data, filter only the Countries that are equal to Cambodia, then do not select the Columns `continent` or `lifeEx`. Then save the results in the variable `gap_cambodia`
+- Shortcuts for the pipe operator are `Ctrl + Shift + M` for Windows and `Cmd + Shift + M` for Mac
+-`%>%` makes life easier by stringing several function operations in a single one
+- To use the pipe operator, you call the dataframe first.
+- Our previous example using `%>%` means the same as saying:
+  - Take the `gapminder` data, filter only the Countries that are equal to Cambodia, select columns `year`, `country`, and `lifeExp`. Finally save the results in the variable `gap_cambodia`
 ```{r, echo = TRUE, comment=""}
 gap_cambodia  <- gapminder %>% 
   filter(country == "Cambodia") %>%
-  select(-continent, -lifeExp)
+  select(year, country, lifeExp)
 ```
 ---
 # *dplyr()* Basics
 ## The `mutate()` function 
-- If we need to add a column using data from other columns, we can use the `mutate()` function to accomplish that.
+- If we need to add a column using data from other columns, we can use the `mutate()` function.
 ![](http://ohi-science.org/data-science-training/img/rstudio-cheatsheet-mutate.png)
 ---
 # *dplyr()* Basics
 ## The `mutate()` function 
 - Calculate each country's annual GDP which is the multiplication of population by GDP per capita
-- We create a new column called `gdp`
-- The variable was not saved anywhere.
-- The `head()` function at the end limits the data displayed in our output
+- We create a new column called `gdp` and perform the operation
 ```{r, echo = TRUE, comment=""}
 gapminder %>% 
   mutate(gdp = pop * gdpPercap) %>% head()
 ```
 ---
 # *dplyr()* Basics
-## The `mutate()` function 
-- Select Asian and European countries, between the years 2005 and 2007 inclusively. 
-- Calculate the population in the thousands and select only columns country, year, and the new column
-```{r, echo = TRUE, comment=""}
-gapminder %>%
-  filter(continent %in% c("Asia", "Europe"),
-         between(year, 2005, 2007)) %>%
-  mutate(pop_thousands = pop/1000) %>%
-  select(country, year, pop_thousands) %>% head()
-```
----
-# *dplyr()* Basics
 ## The `group_by()` function 
-- The `group_by()` function takes and existing table and converts it into a grouped table where operations are performed "by group". Use `ungroup()` to remove grouping. 
-- The function creates a grouping variable
+- The `group_by()` function takes an existing table and converts it into a grouped table where operations are performed "by group". Use `ungroup()` to remove grouping. 
+- The function creates a *grouping variable*. Doesn't do anything on its own.
 ![](http://ohi-science.org/data-science-training/img/rstudio-cheatsheet-group_by.png)
 ---
 # *dplyr()* Basics
@@ -179,38 +164,38 @@ gapminder %>%
 - At the end we have the sum of the total population for each continent from which that country is part of in 2002
 ```{r, echo = TRUE, comment=""}
 gapminder %>%
-  filter(year == 2002) %>%
-  group_by(continent) %>% 
-  mutate(cont_pop = sum(pop)) %>% head()
+  filter(year == 2002) %>% # Only data from the year 2002
+  group_by(continent) %>% # Group the data by continent
+  mutate(cont_pop = sum(pop)) %>% head() # Perform a sum on the population column by continent
 ```
 ---
 # *dplyr()* Basics
 ## Distilling information with `summarize()`
-- If we don't want the other columns and we just want their population total, we use the `summarize()` function
-- `summarize()` will create a new dataframe. It will have one, or more rows for each combination of grouping variables. It will contain one column for each grouping varialbe and one column for each of the summary statistics specified
+- If we don't want any repetitive data, we can use the `summarize()` function
+- `summarize()` will create a new dataframe. It will have one, or more rows for each combination of grouping variables. It will contain one column for each grouping variable and one column for each of the summary statistics specified
 - Some useful summary statistics that can be used in `summarize()` include `mean()`,`median()`,`sd()`,`IQR()`,`min()`,`max()`,`n()`. 
 ![](http://ohi-science.org/data-science-training/img/rstudio-cheatsheet-summarise.png)
 ---
 # *dplyr()* 
 ## Distilling information with `summarize()`
 - The following will filter the population in each continent in 2002 by adding the individual countries that fall into that group. 
-- We apply an ungroup to remove the grouping variable so that we can do more work with it later on. 
-```{r, echo = TRUE, comment=""}
+
+```{r, echo = TRUE, comment="", message=FALSE}
 gapminder %>%
   filter(year == 2002) %>%
-  group_by(continent) %>% 
-  summarize(cont_pop = sum(pop)) %>% ungroup() %>% head()
+  group_by(continent) %>%
+  #mutate(cont_pop=sum(pop)) #If we left mutate() it would output all the rows
+  summarize(cont_pop = sum(pop)) #With summarize we get only the values for each continent
 ```
 ---
 # *dplyr()* 
 ## `summarize()` and then `arrange()` its order
 - We can group by and do summary for more than one column
 - We then want to see the table in ascending order for `year`. Currently it is ordered alphabetically
-```{r, echo = TRUE, comment=""}
+```{r, echo = TRUE, comment="", message=FALSE}
 gapminder %>%
   group_by(continent, year) %>%
   summarize(cont_pop = sum(pop))%>%
-  ungroup() %>%
   arrange(year) %>%
   head() 
 ```
@@ -218,12 +203,12 @@ gapminder %>%
 # *dplyr()* 
 ## Example
 - What is the maximum GDP per continent across all years?
-```{r, echo = TRUE, comment=""}
+```{r, echo = TRUE, comment="", message=FALSE}
 gapminder %>%
   group_by(continent, year) %>% #Select grouping variables
   mutate(gdp = pop * gdpPercap) %>% #Create a new column
-  summarize(max_gdp = max(gdp)) %>% #Show only the columns based on grouping variables 
-  # and a summary statistic
+  #Show only the columns based on grouping variables
+  summarize(max_gdp = max(gdp)) %>% 
   arrange(year) %>% #arrange by the year
   head()
 ```
@@ -361,7 +346,7 @@ str(mtcars)
 ---
 # Using functions in datasets
 - Group the cars by cylinder and calculate the mean for miles per gallon for all the cars with their respective cylinder. 
-```{r, echo = TRUE, comment=""}
+```{r, echo = TRUE, comment="",message=FALSE}
 mtcars %>%
   group_by(cyl) %>%
   summarize(mean_mpg =mean(mpg))
@@ -373,11 +358,19 @@ mtcars %>%
 ```{r, echo = TRUE, comment="", message=FALSE}
 #make sure to load the rlang library to use enquo library(rlang)
 simple_fn <- function(data., col_name){
-  col_name <- enquo(col_name)
+  # Arguments: data. = Dataframe
+  #           col_name = a placeholder variable
+  #                       replaced with a variable of your choosing
+  # Enquo makes sure that it understands that col_name is a placeholder
+  col_name <- enquo(col_name) 
 data. %>%
   group_by(!!col_name) %>%
   summarize(mean = mean(mpg))
 }
+```
+---
+```{r, echo = TRUE, comment="", message=FALSE}
+
 mtcars %>% simple_fn(cyl)
 ```
 ---
@@ -409,7 +402,6 @@ for (color in colours){
   print(color)
 }
 ```
-
 ---
 # Using for loops
 ```{r, echo = TRUE, comment=""}
@@ -417,10 +409,3 @@ for (x in seq(from=2,to=14,by=2)) { #The seq() function creates a list from 2 to
   print(x^2) #Each number in this generated list will be raised to the power of 2
 }
 ```
----
-# Combining functions and loops using the `purrr` package
-- Purrr introduces map functions as well as some new functions for manipulating lists.
-- `map()` will take a vector and a function, call the function once for each element of the vector, and return the results in a list
-<center>
-<img src="https://d33wubrfki0l68.cloudfront.net/f0494d020aa517ae7b1011cea4c4a9f21702df8b/2577b/diagrams/functionals/map.png" width="50%" border="1"/>
-</center>
