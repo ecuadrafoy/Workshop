@@ -1,0 +1,221 @@
+---
+title: "Basic Bioinformatics in R"
+subtitle: "Plotting Graphs and Using BioconductoR"
+author: "Ernesto Cuadra Foy"
+date: "October 8, 2020"
+output:
+  xaringan::moon_reader:
+    css: xaringan-themer.css
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+```{r xaringan-themer, include=FALSE, warning=FALSE}
+library(xaringanthemer)
+style_mono_accent_inverse(
+  base_color = "#3C989E",
+  header_h1_font_size = '40px',
+  header_h2_font_size = '20px',
+  header_font_google = google_font("Josefin Sans"),
+  text_font_google   = google_font("Montserrat", "300", "300i"),
+  code_font_google   = google_font("Fira Mono")
+)
+```
+```{r, include=FALSE}
+library(ggpubr)
+library(tidyverse)
+library(knitr)
+library(rmarkdown)
+library(rlang)
+library(readxl)
+library(utils)
+```
+#Outline
+- Bioinformatics in R
+- Plotting barplots and display significance
+- 
+---
+# R and Bioinformatics
+- Bioinformatics - like biology - **it's messy**. Dealing with different organisms, different systems, conditions.
+
+- Bioinformatics experiments involve testing and **tweaking parameters** and most tools available involve some sort of coding
+  - Commercial tools are expensive and licensed.
+  
+- R shines with a variety of **statistical tools** available and in generation of **publication-quality** graphs and figures
+  - RNA-Seq, population genomics, etc
+
+- Before using any of these tools, make sure to be **working on a tidy and organized dataset**. The tool will not prepare the data for you.
+
+---
+# Plotting with `ggplot`
+- While `ggplot` is not a tool specific to bioinformatics, it will help you produce quality plots for any kind of dataset you are working with <img src = "https://www.ericchowkokyew.com/wp-content/uploads/2019/07/image-2.png" width=40% border=1 align="right" ><BR CLEAR="left">
+
+- In `ggplot` graphs are made of **layers** that are placed on top of each other 
+
+- Each layer contains **visual objects**. Visual elements are referred to as *geoms* (geometric objects)
+
+- *Geoms* are added to the plot using the **+** sign
+
+- The aesthetic properties help determine the color, shape, and size of the elements for each layer. Referred as *Aes*
+![](https://3.bp.blogspot.com/-xG5Jw7-fEpk/WqWjNg49poI/AAAAAAAAHFw/etDhUKvTQIA4UixU_cmUiVC0MEBFuihmQCLcBGAs/s1600/ggplot2_syntax.PNG)
+
+---
+# Plotting with `ggplot`
+- A Histogram with the `mtcars` dataset
+- The `stat` function inside the histogram creates data not from the data itself, however it was mapped to `count`
+```{r, echo = TRUE, comment="", message=FALSE, fig.width=5,fig.height=4}
+data(mtcars)
+ggplot(mtcars, aes(disp))+
+  geom_histogram(aes(y=stat(count)))
+```
+---
+# Plotting with `ggplot`
+- We can adjust the `stat` function to tell `ggplot` that we want to use calculated aesthetics produced by the statistic
+```{r, echo = TRUE, comment="", message=FALSE, fig.width=5,fig.height=4}
+data(mtcars)
+ggplot(mtcars, aes(disp))+
+  geom_histogram(aes(y=stat(count/max(count))))
+```
+---
+# Adding p-values and significance in `ggplot`
+- A required package to install is `ggpubr` which provides ggplot2-based publication ready plots
+  - Install it as such `install.packages('ggpubr')`
+  - Then load it with `library(ggpubr)`
+- For this example we will work with the **ToothGrowth** dataset. 
+  - Data set contains the result from an experiment studying the effect of vitamin C on tooth growth (**len**) in 60 Guinea pigs
+  - Each animal received doses (**supp**) of vitamin C by one of two delivery methods, juice (OJ) or ascorbic acid (VC)
+  - Each animal received one of three doses (**dose**) of vitamin C: 0.5, 1, and 2 mg/day
+```{r, echo = TRUE, comment="", message=FALSE, fig.width=5,fig.height=4}
+data("ToothGrowth")
+head(ToothGrowth)
+```
+---
+# Adding p-values and significance in `ggplot`
+- `ggpubr` adds two new functions, 
+  - `Compare_means()`, easy to use solution to perform one and multiple mean comparisons
+  - `stat_compare_means()`, solution to automatically add p-values and significance levels to `ggplot`
+
+- `compare_means(formula, data, method = "wilcox.test", paired = FALSE, group.by = NULL, ref.group = NULL, ...)`
+  - In `formula` you have **x**, as a numeric variable and then compare it to a group using **~**
+  - In this case the `method` is set by default to be a Wilcoxon test. Allowed variables include `t.test`, `anova`, `kruskal.test`
+  - `Paired` indicates that you want a paired test, only used for `t.test` and `wilcox.test`
+  
+---
+# Adding p-values and significance in `ggplot`
+- Let's perform a test on our dataset
+- **len** contains the length of the Guinea pig teeth and **supp* is the type of delivery method
+```{r, echo = TRUE, comment="", message=FALSE, fig.width=5,fig.height=4}
+compare_means(len~supp, data = ToothGrowth)
+```
+  
+---
+# Adding p-values and significance in `ggplot`
+- `stat_compare_means()` acts as a geometrical layer on `ggplot` that performs the same tests but can be used with box plots, dot plots, bar plots and line plots
+```{r, echo = TRUE, comment="", message=FALSE, fig.width=5,fig.height=4}
+p <- ggboxplot(ToothGrowth, x = 'supp', y= 'len',
+               color = 'supp', add = 'jitter')
+p
+```
+---
+# Adding p-values and significance in `ggplot`
+- Added the p-value on the graph directly
+```{r, echo = TRUE, comment="", message=FALSE, fig.width=5,fig.height=4}
+p + stat_compare_means(method = "t.test")
+```
+---
+# Adding p-values and significance in `ggplot`
+- The `stat_compare_means()` function can be modified further to display the desired aesthetics
+- We can see that there is no difference between OJ and VC with regards to tooth length
+```{r, echo = TRUE, comment="", message=FALSE, fig.width=5,fig.height=4}
+p + stat_compare_means(method = "t.test", aes(label = ..p.signif..),
+                       label.x = 1.5, label.y = 40)
+```
+---
+# Adding layers
+- We can apply a `facet_grid()` layer which allows us to further stratify our data
+- In this case we want to build facets for each dose group, and comparing OJ vs VC
+```{r, echo = TRUE, comment="", message=FALSE, fig.width=10,fig.height=4}
+p + stat_compare_means(method = "t.test", aes(label = ..p.signif..),
+                       label.x = 1.5, label.y = 35)+
+                      facet_grid(~dose)
+```
+---
+# Exploring cytokine data from fibroblasts
+- Data from "Distinct fibroblast subsets drive inflammation and damage in arthritis", Croft et.al (2019)
+- The data is in a format that is easy for us to interpret, but `ggplot` prefers long formats
+```{r, echo = TRUE, comment="", message=FALSE, warning=FALSE, fig.width=10,fig.height=4}
+data <- read_csv('https://raw.githubusercontent.com/ecuadrafoy/Workshop/master/figure_4a.csv')
+head(data)
+```
+---
+# Exploring cytokine data from fibroblasts
+- We need to convert from a wide format to a long format, using the function `pivot_long()`
+```{r, echo = TRUE, comment="", message=FALSE, warning=FALSE, fig.width=10,fig.height=4}
+data_long <- data %>%
+  pivot_longer(cols = -Cytokine,
+               names_to = c("thy", "status", "repeat"),
+               names_sep = "_",
+               values_to = "levels") %>% 
+  select(-'repeat') %>% 
+  unite('status', c('thy','status'))
+kable(head(data_long, "simple"))
+```
+---
+# `ggplot` is a highly versatile tool
+```{r, echo = TRUE, comment="", warning=FALSE}
+my_comparisons <- list( c("Thy1_minus", "Thy1_plus")) #The two groups to compare
+ cytokines <- data_long %>% ggplot(aes(x=status, y=levels, fill=status))+ #Pick the axes
+   
+      stat_summary(fun='mean', geom='bar')+ # Pick the stat to measure, in this case mean
+   
+      scale_fill_manual(values=c("grey","black"))+ # Pick the colours for your barplot
+   
+      facet_wrap(~Cytokine, scales = "free_y")+ # Determine the variable by which to create facets
+   
+      stat_compare_means(comparisons = my_comparisons,
+                      method = "t.test", aes(label = ..p.signif..), 
+                      size=2, paired = TRUE)+ # Apply the t-test
+   
+      labs(x='Thy status',
+            y = 'Cytokine levels',
+            title = 'Figure 4a',
+            subtitle = "Croft et al, Nature, 2019")+ #Name the labels
+   
+      theme(strip.background = element_rect(fill = FALSE))+ # Options to make the configure the graph look
+      theme(panel.background = element_rect(fill = "white"))
+```
+---
+# `ggplot` is a highly versatile tool
+```{r, echo = TRUE, comment="", message=FALSE, warning=FALSE, fig.width=10,fig.height=6}
+cytokines
+```
+---
+# Getting started with `BioconductoR`
+- Bioconductor provides tools for the analysis and comprehension of high-throughput genomic data.
+- Bioconductor software packages focused on the analysis of single channel Affymetrix and two or more channel cDNA/Oligo microarrays
+- As the project has matured, the functional scope of the software packages broadened to include the analysis of all types of genomic data, such as SAGE, sequence, or SNP data.
+- As of April 28 2020, there are 1903 packages available
+- Bioconductor is a huge module, and has its own installation manager. Be sure to initialize the following line before installing any packages
+```{r, echo = TRUE, comment="", eval=FALSE, message=FALSE, warning=FALSE}
+if (!requireNamespace("BiocManager"))
+    install.packages("BiocManager")
+BiocManager::install()
+```
+---
+# Processing RNASeq Data with `tidybulk`
+- The tidybulk package provides a tidy data structure and a modular framework for bulk transcriptional analyses
+<img src = "https://stemangiola.github.io/tidybulk/inst/logo.png" width=40% align="right" ><BR CLEAR="left">
+
+- `tidybulk` allows differential expression analysis from RNA sequencing datasets in a friendly way.
+
+- The minimal input dataframe for `tidybulk` to work requires the following:
+  - Sample column(`chr` or `fctr`) 
+  - Transcript/gene column (`chr` or `fctr`)
+  - Abundance/counts column (`integer`)
+- Creates a tidy transcriptomics object (**tt**) from a tibble (**tbl**) which is a `tidyverse` dataframe
+-To install `tidybulk` and any other BioconductoR package, we use the following syntax:
+  - `BiocManager::install("tidybulk")`
+
+
+

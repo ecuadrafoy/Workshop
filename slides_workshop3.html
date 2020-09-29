@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Basic Bioinformatics in R</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Ernesto Cuadra Foy" />
+    <meta name="date" content="2020-10-08" />
+    <link rel="stylesheet" href="xaringan-themer.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Basic Bioinformatics in R
+## Plotting Graphs and Using BioconductoR
+### Ernesto Cuadra Foy
+### October 8, 2020
+
+---
+
+
+
+
+
+#Outline
+- Bioinformatics in R
+- Plotting barplots and display significance
+- 
+---
+# R and Bioinformatics
+- Bioinformatics - like biology - **it's messy**. Dealing with different organisms, different systems, conditions.
+
+- Bioinformatics experiments involve testing and **tweaking parameters** and most tools available involve some sort of coding
+  - Commercial tools are expensive and licensed.
+  
+- R shines with a variety of **statistical tools** available and in generation of **publication-quality** graphs and figures
+  - RNA-Seq, population genomics, etc
+
+- Before using any of these tools, make sure to be **working on a tidy and organized dataset**. The tool will not prepare the data for you.
+
+---
+# Plotting with `ggplot`
+- While `ggplot` is not a tool specific to bioinformatics, it will help you produce quality plots for any kind of dataset you are working with &lt;img src = "https://www.ericchowkokyew.com/wp-content/uploads/2019/07/image-2.png" width=40% border=1 align="right" &gt;&lt;BR CLEAR="left"&gt;
+
+- In `ggplot` graphs are made of **layers** that are placed on top of each other 
+
+- Each layer contains **visual objects**. Visual elements are referred to as *geoms* (geometric objects)
+
+- *Geoms* are added to the plot using the **+** sign
+
+- The aesthetic properties help determine the color, shape, and size of the elements for each layer. Referred as *Aes*
+![](https://3.bp.blogspot.com/-xG5Jw7-fEpk/WqWjNg49poI/AAAAAAAAHFw/etDhUKvTQIA4UixU_cmUiVC0MEBFuihmQCLcBGAs/s1600/ggplot2_syntax.PNG)
+
+---
+# Plotting with `ggplot`
+- A Histogram with the `mtcars` dataset
+- The `stat` function inside the histogram creates data not from the data itself, however it was mapped to `count`
+
+```r
+data(mtcars)
+ggplot(mtcars, aes(disp))+
+  geom_histogram(aes(y=stat(count)))
+```
+
+![](slides_workshop3_files/figure-html/unnamed-chunk-2-1.png)&lt;!-- --&gt;
+---
+# Plotting with `ggplot`
+- We can adjust the `stat` function to tell `ggplot` that we want to use calculated aesthetics produced by the statistic
+
+```r
+data(mtcars)
+ggplot(mtcars, aes(disp))+
+  geom_histogram(aes(y=stat(count/max(count))))
+```
+
+![](slides_workshop3_files/figure-html/unnamed-chunk-3-1.png)&lt;!-- --&gt;
+---
+# Adding p-values and significance in `ggplot`
+- A required package to install is `ggpubr` which provides ggplot2-based publication ready plots
+  - Install it as such `install.packages('ggpubr')`
+  - Then load it with `library(ggpubr)`
+- For this example we will work with the **ToothGrowth** dataset. 
+  - Data set contains the result from an experiment studying the effect of vitamin C on tooth growth (**len**) in 60 Guinea pigs
+  - Each animal received doses (**supp**) of vitamin C by one of two delivery methods, juice (OJ) or ascorbic acid (VC)
+  - Each animal received one of three doses (**dose**) of vitamin C: 0.5, 1, and 2 mg/day
+
+```r
+data("ToothGrowth")
+head(ToothGrowth)
+```
+
+```
+   len supp dose
+1  4.2   VC  0.5
+2 11.5   VC  0.5
+3  7.3   VC  0.5
+4  5.8   VC  0.5
+5  6.4   VC  0.5
+6 10.0   VC  0.5
+```
+---
+# Adding p-values and significance in `ggplot`
+- `ggpubr` adds two new functions, 
+  - `Compare_means()`, easy to use solution to perform one and multiple mean comparisons
+  - `stat_compare_means()`, solution to automatically add p-values and significance levels to `ggplot`
+
+- `compare_means(formula, data, method = "wilcox.test", paired = FALSE, group.by = NULL, ref.group = NULL, ...)`
+  - In `formula` you have **x**, as a numeric variable and then compare it to a group using **~**
+  - In this case the `method` is set by default to be a Wilcoxon test. Allowed variables include `t.test`, `anova`, `kruskal.test`
+  - `Paired` indicates that you want a paired test, only used for `t.test` and `wilcox.test`
+  
+---
+# Adding p-values and significance in `ggplot`
+- Let's perform a test on our dataset
+- **len** contains the length of the Guinea pig teeth and **supp* is the type of delivery method
+
+```r
+compare_means(len~supp, data = ToothGrowth)
+```
+
+```
+# A tibble: 1 x 8
+  .y.   group1 group2      p p.adj p.format p.signif method  
+  &lt;chr&gt; &lt;chr&gt;  &lt;chr&gt;   &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;    &lt;chr&gt;    &lt;chr&gt;   
+1 len   OJ     VC     0.0645 0.064 0.064    ns       Wilcoxon
+```
+  
+---
+# Adding p-values and significance in `ggplot`
+- `stat_compare_means()` acts as a geometrical layer on `ggplot` that performs the same tests but can be used with box plots, dot plots, bar plots and line plots
+
+```r
+p &lt;- ggboxplot(ToothGrowth, x = 'supp', y= 'len',
+               color = 'supp', add = 'jitter')
+p
+```
+
+![](slides_workshop3_files/figure-html/unnamed-chunk-6-1.png)&lt;!-- --&gt;
+---
+# Adding p-values and significance in `ggplot`
+- Added the p-value on the graph directly
+
+```r
+p + stat_compare_means(method = "t.test")
+```
+
+![](slides_workshop3_files/figure-html/unnamed-chunk-7-1.png)&lt;!-- --&gt;
+---
+# Adding p-values and significance in `ggplot`
+- The `stat_compare_means()` function can be modified further to display the desired aesthetics
+- We can see that there is no difference between OJ and VC with regards to tooth length
+
+```r
+p + stat_compare_means(method = "t.test", aes(label = ..p.signif..),
+                       label.x = 1.5, label.y = 40)
+```
+
+![](slides_workshop3_files/figure-html/unnamed-chunk-8-1.png)&lt;!-- --&gt;
+---
+# Adding layers
+- We can apply a `facet_grid()` layer which allows us to further stratify our data
+- In this case we want to build facets for each dose group, and comparing OJ vs VC
+
+```r
+p + stat_compare_means(method = "t.test", aes(label = ..p.signif..),
+                       label.x = 1.5, label.y = 35)+
+                      facet_grid(~dose)
+```
+
+![](slides_workshop3_files/figure-html/unnamed-chunk-9-1.png)&lt;!-- --&gt;
+---
+# Exploring cytokine data from fibroblasts
+- Data from "Distinct fibroblast subsets drive inflammation and damage in arthritis", Croft et.al (2019)
+- The data is in a format that is easy for us to interpret, but `ggplot` prefers long formats
+
+```r
+data &lt;- read_csv('https://raw.githubusercontent.com/ecuadrafoy/Workshop/master/figure_4a.csv')
+head(data)
+```
+
+```
+# A tibble: 6 x 13
+  Cytokine Thy1_minus Thy1_minus_1 Thy1_minus_2 Thy1_minus_3 Thy1_minus_4
+  &lt;chr&gt;         &lt;dbl&gt;        &lt;dbl&gt;        &lt;dbl&gt;        &lt;dbl&gt;        &lt;dbl&gt;
+1 Il6       11023          987          873         13405       12098    
+2 Cxcl2       234          256          301           225         332    
+3 Ccl2          3.41         2.09         1.89          2.30        3.09 
+4 Ccl7          9.34         1.20        14.4           8.92        6.61 
+5 Ccl12         3.02         2.01         1.87          1.45        1.54 
+6 Ccl5          0.487        0.599        0.498         1.20        0.608
+# ... with 7 more variables: Thy1_minus_5 &lt;dbl&gt;, Thy1_plus &lt;dbl&gt;,
+#   Thy1_plus_1 &lt;dbl&gt;, Thy1_plus_2 &lt;dbl&gt;, Thy1_plus_3 &lt;dbl&gt;, Thy1_plus_4 &lt;dbl&gt;,
+#   Thy1_plus_5 &lt;dbl&gt;
+```
+---
+# Exploring cytokine data from fibroblasts
+- We need to convert from a wide format to a long format, using the function `pivot_long()`
+
+```r
+data_long &lt;- data %&gt;%
+  pivot_longer(cols = -Cytokine,
+               names_to = c("thy", "status", "repeat"),
+               names_sep = "_",
+               values_to = "levels") %&gt;% 
+  select(-'repeat') %&gt;% 
+  unite('status', c('thy','status'))
+kable(head(data_long, "simple"))
+```
+
+
+
+|Cytokine |status     |     levels|
+|:--------|:----------|----------:|
+|Il6      |Thy1_minus |  11023.000|
+|Il6      |Thy1_minus |    987.000|
+|Il6      |Thy1_minus |    873.000|
+|Il6      |Thy1_minus |  13405.000|
+|Il6      |Thy1_minus |  12098.000|
+|Il6      |Thy1_minus |  14409.000|
+|Il6      |Thy1_plus  | 597530.000|
+|Il6      |Thy1_plus  | 678098.000|
+|Il6      |Thy1_plus  | 532110.000|
+|Il6      |Thy1_plus  | 589099.000|
+|Il6      |Thy1_plus  | 600123.000|
+|Il6      |Thy1_plus  | 597220.000|
+|Cxcl2    |Thy1_minus |    234.000|
+|Cxcl2    |Thy1_minus |    256.000|
+|Cxcl2    |Thy1_minus |    301.000|
+|Cxcl2    |Thy1_minus |    225.000|
+|Cxcl2    |Thy1_minus |    332.000|
+|Cxcl2    |Thy1_minus |    324.000|
+|Cxcl2    |Thy1_plus  |   1453.000|
+|Cxcl2    |Thy1_plus  |   1220.000|
+|Cxcl2    |Thy1_plus  |   1365.000|
+|Cxcl2    |Thy1_plus  |   1567.000|
+|Cxcl2    |Thy1_plus  |   1440.000|
+|Cxcl2    |Thy1_plus  |   1620.000|
+|Ccl2     |Thy1_minus |      3.409|
+|Ccl2     |Thy1_minus |      2.093|
+|Ccl2     |Thy1_minus |      1.887|
+|Ccl2     |Thy1_minus |      2.301|
+|Ccl2     |Thy1_minus |      3.092|
+|Ccl2     |Thy1_minus |      2.782|
+|Ccl2     |Thy1_plus  |     23.098|
+|Ccl2     |Thy1_plus  |     14.587|
+|Ccl2     |Thy1_plus  |     12.098|
+|Ccl2     |Thy1_plus  |     17.612|
+|Ccl2     |Thy1_plus  |     16.509|
+|Ccl2     |Thy1_plus  |     17.823|
+|Ccl7     |Thy1_minus |      9.342|
+|Ccl7     |Thy1_minus |      1.203|
+|Ccl7     |Thy1_minus |     14.352|
+|Ccl7     |Thy1_minus |      8.923|
+|Ccl7     |Thy1_minus |      6.609|
+|Ccl7     |Thy1_minus |     12.301|
+|Ccl7     |Thy1_plus  |     34.231|
+|Ccl7     |Thy1_plus  |     45.698|
+|Ccl7     |Thy1_plus  |     39.823|
+|Ccl7     |Thy1_plus  |     20.832|
+|Ccl7     |Thy1_plus  |     32.092|
+|Ccl7     |Thy1_plus  |     28.911|
+|Ccl12    |Thy1_minus |      3.020|
+|Ccl12    |Thy1_minus |      2.010|
+|Ccl12    |Thy1_minus |      1.870|
+|Ccl12    |Thy1_minus |      1.450|
+|Ccl12    |Thy1_minus |      1.540|
+|Ccl12    |Thy1_minus |      1.330|
+|Ccl12    |Thy1_plus  |     58.870|
+|Ccl12    |Thy1_plus  |     39.870|
+|Ccl12    |Thy1_plus  |     90.870|
+|Ccl12    |Thy1_plus  |     52.390|
+|Ccl12    |Thy1_plus  |     49.980|
+|Ccl12    |Thy1_plus  |     31.230|
+|Ccl5     |Thy1_minus |      0.487|
+|Ccl5     |Thy1_minus |      0.599|
+|Ccl5     |Thy1_minus |      0.498|
+|Ccl5     |Thy1_minus |      1.203|
+|Ccl5     |Thy1_minus |      0.608|
+|Ccl5     |Thy1_minus |      0.773|
+|Ccl5     |Thy1_plus  |     23.409|
+|Ccl5     |Thy1_plus  |     18.931|
+|Ccl5     |Thy1_plus  |     19.209|
+|Ccl5     |Thy1_plus  |     25.732|
+|Ccl5     |Thy1_plus  |     30.982|
+|Ccl5     |Thy1_plus  |     27.631|
+|Mmp3     |Thy1_minus |   1231.000|
+|Mmp3     |Thy1_minus |   1544.000|
+|Mmp3     |Thy1_minus |   1420.000|
+|Mmp3     |Thy1_minus |   1220.000|
+|Mmp3     |Thy1_minus |   1871.000|
+|Mmp3     |Thy1_minus |   1209.000|
+|Mmp3     |Thy1_plus  |    230.000|
+|Mmp3     |Thy1_plus  |    143.000|
+|Mmp3     |Thy1_plus  |    387.000|
+|Mmp3     |Thy1_plus  |    405.000|
+|Mmp3     |Thy1_plus  |    287.000|
+|Mmp3     |Thy1_plus  |    332.000|
+|Mmp9     |Thy1_minus |   1200.000|
+|Mmp9     |Thy1_minus |   1543.000|
+|Mmp9     |Thy1_minus |   1160.000|
+|Mmp9     |Thy1_minus |    984.000|
+|Mmp9     |Thy1_minus |    884.000|
+|Mmp9     |Thy1_minus |   1762.000|
+|Mmp9     |Thy1_plus  |    309.000|
+|Mmp9     |Thy1_plus  |    187.000|
+|Mmp9     |Thy1_plus  |    456.000|
+|Mmp9     |Thy1_plus  |    231.000|
+|Mmp9     |Thy1_plus  |    298.000|
+|Mmp9     |Thy1_plus  |    172.000|
+|Mmp13    |Thy1_minus |   1562.000|
+|Mmp13    |Thy1_minus |   1433.000|
+|Mmp13    |Thy1_minus |   1022.000|
+|Mmp13    |Thy1_minus |   1562.000|
+|Mmp13    |Thy1_minus |   1488.000|
+|Mmp13    |Thy1_minus |   1321.000|
+|Mmp13    |Thy1_plus  |    298.000|
+|Mmp13    |Thy1_plus  |    440.000|
+|Mmp13    |Thy1_plus  |    211.000|
+|Mmp13    |Thy1_plus  |    287.000|
+|Mmp13    |Thy1_plus  |     66.000|
+|Mmp13    |Thy1_plus  |    330.000|
+|Cxcl12   |Thy1_minus |    764.000|
+|Cxcl12   |Thy1_minus |    293.000|
+|Cxcl12   |Thy1_minus |    345.000|
+|Cxcl12   |Thy1_minus |    876.000|
+|Cxcl12   |Thy1_minus |    409.000|
+|Cxcl12   |Thy1_minus |    665.000|
+|Cxcl12   |Thy1_plus  |   3422.000|
+|Cxcl12   |Thy1_plus  |   4098.000|
+|Cxcl12   |Thy1_plus  |   2876.000|
+|Cxcl12   |Thy1_plus  |   5678.000|
+|Cxcl12   |Thy1_plus  |   1872.000|
+|Cxcl12   |Thy1_plus  |   3987.000|
+|Cxcl14   |Thy1_minus |    456.000|
+|Cxcl14   |Thy1_minus |    309.000|
+|Cxcl14   |Thy1_minus |    243.000|
+|Cxcl14   |Thy1_minus |    192.000|
+|Cxcl14   |Thy1_minus |    456.000|
+|Cxcl14   |Thy1_minus |    192.000|
+|Cxcl14   |Thy1_plus  |   3422.000|
+|Cxcl14   |Thy1_plus  |   5698.000|
+|Cxcl14   |Thy1_plus  |   6078.000|
+|Cxcl14   |Thy1_plus  |   4576.000|
+|Cxcl14   |Thy1_plus  |   6798.000|
+|Cxcl14   |Thy1_plus  |   3487.000|
+|Cxcl5    |Thy1_minus |    398.000|
+|Cxcl5    |Thy1_minus |    230.000|
+|Cxcl5    |Thy1_minus |    162.000|
+|Cxcl5    |Thy1_minus |    134.000|
+|Cxcl5    |Thy1_minus |    543.000|
+|Cxcl5    |Thy1_minus |    345.000|
+|Cxcl5    |Thy1_plus  |   4673.000|
+|Cxcl5    |Thy1_plus  |   3498.000|
+|Cxcl5    |Thy1_plus  |   5643.000|
+|Cxcl5    |Thy1_plus  |   3874.000|
+|Cxcl5    |Thy1_plus  |   3201.000|
+|Cxcl5    |Thy1_plus  |   3321.000|
+---
+# `ggplot` is a highly versatile tool
+
+```r
+my_comparisons &lt;- list( c("Thy1_minus", "Thy1_plus")) #The two groups to compare
+ cytokines &lt;- data_long %&gt;% ggplot(aes(x=status, y=levels, fill=status))+ #Pick the axes
+   
+      stat_summary(fun='mean', geom='bar')+ # Pick the stat to measure, in this case mean
+   
+      scale_fill_manual(values=c("grey","black"))+ # Pick the colours for your barplot
+   
+      facet_wrap(~Cytokine, scales = "free_y")+ # Determine the variable by which to create facets
+   
+      stat_compare_means(comparisons = my_comparisons,
+                      method = "t.test", aes(label = ..p.signif..), 
+                      size=2, paired = TRUE)+ # Apply the t-test
+   
+      labs(x='Thy status',
+            y = 'Cytokine levels',
+            title = 'Figure 4a',
+            subtitle = "Croft et al, Nature, 2019")+ #Name the labels
+   
+      theme(strip.background = element_rect(fill = FALSE))+ # Options to make the configure the graph look
+      theme(panel.background = element_rect(fill = "white"))
+```
+---
+# `ggplot` is a highly versatile tool
+
+```r
+cytokines
+```
+
+![](slides_workshop3_files/figure-html/unnamed-chunk-13-1.png)&lt;!-- --&gt;
+---
+# Getting started with `BioconductoR`
+- Bioconductor provides tools for the analysis and comprehension of high-throughput genomic data.
+- Bioconductor software packages focused on the analysis of single channel Affymetrix and two or more channel cDNA/Oligo microarrays
+- As the project has matured, the functional scope of the software packages broadened to include the analysis of all types of genomic data, such as SAGE, sequence, or SNP data.
+- As of April 28 2020, there are 1903 packages available
+- Bioconductor is a huge module, and has its own installation manager. Be sure to initialize the following line before installing any packages
+
+```r
+if (!requireNamespace("BiocManager"))
+    install.packages("BiocManager")
+BiocManager::install()
+```
+---
+# Processing RNASeq Data with `tidybulk`
+- The tidybulk package provides a tidy data structure and a modular framework for bulk transcriptional analyses
+&lt;img src = "https://stemangiola.github.io/tidybulk/inst/logo.png" width=40% align="right" &gt;&lt;BR CLEAR="left"&gt;
+
+- `tidybulk` allows differential expression analysis from RNA sequencing datasets in a friendly way.
+
+- The minimal input dataframe for `tidybulk` to work requires the following:
+  - Sample column(`chr` or `fctr`) 
+  - Transcript/gene column (`chr` or `fctr`)
+  - Abundance/counts column (`integer`)
+- Creates a tidy transcriptomics object (**tt**) from a tibble (**tbl**) which is a `tidyverse` dataframe
+-To install `tidybulk` and any other BioconductoR package, we use the following syntax:
+  - `BiocManager::install("tidybulk")`
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create();
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
