@@ -30,6 +30,9 @@ library(rmarkdown)
 library(rlang)
 library(readxl)
 library(utils)
+library(ggrepel)
+library(tidyHeatmap)
+library(tidybulk)
 ```
 #Outline
 - Bioinformatics in R
@@ -195,8 +198,9 @@ cytokines
 - Bioconductor provides tools for the analysis and comprehension of high-throughput genomic data.
 - Bioconductor software packages focused on the analysis of single channel Affymetrix and two or more channel cDNA/Oligo microarrays
 - As the project has matured, the functional scope of the software packages broadened to include the analysis of all types of genomic data, such as SAGE, sequence, or SNP data.
-- As of April 28 2020, there are 1903 packages available
-- Bioconductor is a huge module, and has its own installation manager. Be sure to initialize the following line before installing any packages
+- As of April 28 2020, there are **1903** packages available
+- Bioconductor is a huge module, and has its own installation manager. Be sure to initialize the following line at least once before installing any packages
+
 ```{r, echo = TRUE, comment="", eval=FALSE, message=FALSE, warning=FALSE}
 if (!requireNamespace("BiocManager"))
     install.packages("BiocManager")
@@ -213,9 +217,168 @@ BiocManager::install()
   - Sample column(`chr` or `fctr`) 
   - Transcript/gene column (`chr` or `fctr`)
   - Abundance/counts column (`integer`)
+
 - Creates a tidy transcriptomics object (**tt**) from a tibble (**tbl**) which is a `tidyverse` dataframe
--To install `tidybulk` and any other BioconductoR package, we use the following syntax:
+
+-To install `tidybulk` and any other BioconductoR package, we use the following code:
   - `BiocManager::install("tidybulk")`
+  
+---
+# Processing RNASeq Data with `tidybulk`
+- We will be working with the `Pasilla` dataset from Brooks AN et al. 2011, which studied the effect of RNAi knockdown of Pasilla,the Drosophila melanogaster ortholog of mammalian NOVA1 and NOVA2.
+
+- The data provides per-exon and per-gene read counts.
+
+-About **14,000** rows! (Only showing 6 here)
+
+```{r, echo = TRUE, comment="", message=FALSE, warning=FALSE}
+pasilla_data <- read_csv('https://raw.githubusercontent.com/ecuadrafoy/Workshop/master/pasilla_gene_counts.csv')
+head(pasilla_data)
+```
+---
+# Processing RNASeq Data with `tidybulk`
+- We need to clean up this data so that is in a tidy format
+```{r, echo = TRUE, comment="", message=FALSE, warning=FALSE}
+#Annotation data
+coldata = read.csv('https://raw.githubusercontent.com/ecuadrafoy/Workshop/master/pasilla_sample_annotation.csv', row.names = 1)
+coldata = coldata[, c("condition", "type")]
+#Converting to Long Format and joining annotation table
+pasilla_dataset <- 
+  pasilla_data %>% as_tibble(rownames = 'transcript') %>%
+    pivot_longer(names_to = 'sample',
+                 values_to = 'count',
+                 cols = -transcript) %>%
+    left_join(coldata %>%
+                as_tibble(rownames = "sample") %>%
+                mutate(sample = gsub("fb", "", sample))) %>%
+    mutate_if(is.character, as.factor)
+```
+---
+# Processing RNASeq Data with `tidybulk`
+```{r, echo = TRUE, comment="", message=FALSE, warning=FALSE}
+head(pasilla_dataset)
+```
+---
+# Processing RNASeq Data with `tidybulk`
+-You need to specify which column names contain
+  - Sample column(`chr` or `fctr`) 
+  - Transcript/gene column (`chr` or `fctr`)
+  - Abundance/counts column (`integer`)
+- You need to call them in that order
+- The end product is a tidybulk-ready dataset called tidy transcriptomic object. 
+```{r, echo = TRUE, comment="", message=FALSE, warning=FALSE}
+pasilla_tt <- pasilla_dataset %>%  tidybulk(sample, transcript, count)
+class(pasilla_dataset)
+class(pasilla_tt)
+```
+---
+# Filtering lowly expressed genes
+- Now that our data is ready and in a **tt** format, we can start working with it.
+- Normalization is performed to eliminate uninteresting differences between samples due to sequencing depth or composition.
+- The function `scale_abundance()` generates scaled counts and allows the usage of different normalization methods. By default, `tidybulk` will use trimmed mean of M values (TMM) normalization (Robinson and Oshlack 2010).
+- Scaling factors are calculated on filtered transcripts. In this case the `factor_of_interest` is treatment condition
+```{r, echo = TRUE, comment="", message=FALSE, warning=FALSE}
+pasilla_scaled <- pasilla_tt %>% scale_abundance(factor_of_interest = condition)
+pasilla_scaled %>% select(transcript,lowly_abundant) %>% head() #lowly_abundant column is created
+```
+
+---
+# Principal Component Aanalysis (PCA)
+- With PCA we can reduce the dimensions of data to identify the greatest sources of variation in the data
+- This is an example of unsupervised analysis where groups are not specified
+- What we hope to see is that the greatest sources of variation in the data are the treatment/groups we are interested in
+- It can be a useful tool for quality control and checking for outliers
+```{r, echo = TRUE, comment="", message=FALSE, warning=FALSE}
+pasilla_scal_PCA <- pasilla_scaled %>%
+  reduce_dimensions(method="PCA")
+```
+---
+# Principal Component Aanalysis (PCA)
+- This creates the following dataset 
+```{r, echo = TRUE, comment="", message=FALSE, warning=FALSE}
+pasilla_scal_PCA %>% select(transcript, PC1, PC2) %>% head()
+```
+---
+# Principal Component Aanalysis (PCA)
+- `pivot_sample()` returns a table with only sample-related columns, useful for visualization. 
+```{r, echo = TRUE, comment="", message=FALSE, warning=FALSE}
+pasilla_scal_PCA %>% pivot_sample()
+```
+---
+# Visualizing PCA
+- With `pivot_sample()` we can now plot the reduced dimensions. 
+- The `ggrepel` package allows you to label dots with names. 
+```{r, echo = TRUE, comment="", message=FALSE, warning=FALSE, fig.width=5,fig.height=4}
+pasilla_scal_PCA %>%
+  pivot_sample() %>%
+  ggplot(aes(x=PC1, y=PC2, colour=condition)) +
+  geom_point() +
+  geom_text_repel(aes(label=sample), show.legend = FALSE) + #From ggrepel package
+  theme_bw()
+```
+---
+# Visualizing PCA
+- What happens if we include the `type` variable?
+- We can see that treatment separates samples on PC1 and that the type of reading is separated by PC2
+```{r, echo = TRUE, comment="", message=FALSE, warning=FALSE, fig.width=5,fig.height=4}
+pasilla_scal_PCA %>%
+  pivot_sample() %>%
+  ggplot(aes(x=PC1, y=PC2, colour=condition, shape = type)) +
+  geom_point() +
+  geom_text_repel(aes(label=sample), show.legend = FALSE) + #From ggrepel package
+  theme_bw()
+```
+
+---
+# Hierarchical clustering with heatmaps
+- For heatmaps we use the package `tidyHeatmaps` which relies on the `ComplexHeatmaps` graphical engine. Make sure to install both and activate them before using this package
+- `BiocManager::install("ComplexHeatmap")`
+- `BiocManager::install("tidyHeatmap")`
+```{r, echo = TRUE, eval=FALSE, comment="", message=FALSE, warning=FALSE}
+heatmap <- pasilla_scaled %>%
+  # filter lowly abundant
+  filter(!lowly_abundant) %>%
+  # extract 500 most variable genes
+  keep_variable( .abundance = count_scaled, top = 500) %>% #keep_variable allows to extract the most variable genes
+  # create heatmap
+  heatmap(
+    .row = transcript,
+    .column = sample,
+    .value = count_scaled,
+    annotation = condition,
+  )
+```
+---
+# Hierarchical clustering with heatmaps
+```{r, echo = FALSE, comment="", message=FALSE, warning=FALSE, fig.width=10,fig.height=6}
+pasilla_scaled %>%
+  # filter lowly abundant
+  filter(!lowly_abundant) %>%
+  # extract 500 most variable genes
+  keep_variable( .abundance = count_scaled, top = 500) %>% 
+  #keep_variable allows to extract the most variable genes
+  
+  # create heatmap
+  heatmap(
+    .row = transcript,
+    .column = sample,
+    .value = count_scaled,
+    annotation = condition,
+  )
+```
+---
+#Differential Gene Expression
+- After checking the data we can continue testing for differentially expressed genes. 
+- The `test_differential_abundance` from tidybulk uses *edgeR* (Robinson, McCarthy, and Smyth 2010) to perform differential expression analysis.
+- We take our already prepared tidybulk object and specify what do we want to compare to. This is set after the ~ line.
+  - From our PCA analysis we determined that treatment and type of reading were important factors.
+- **For some reason I was not able to render this, so this part will be shown in class as well as the MA plot**
+```{r, echo = TRUE, eval=FALSE, comment="", message=FALSE, warning=FALSE}
+pasilla_de <- pasilla_tt %>% 
+  test_differential_abundance(~ condition + type)
+```
+
+
 
 
 
