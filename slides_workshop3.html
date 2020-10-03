@@ -24,8 +24,9 @@ class: center, middle, inverse, title-slide
 
 #Outline
 - Bioinformatics in R
-- Plotting barplots and display significance
-- 
+- Plotting barplots and determine statistical significance
+- Styling a `ggplot` graph ready for publication
+- Using `tidybulk` for RNASeq analysis
 ---
 # R and Bioinformatics
 - Bioinformatics - like biology - **it's messy**. Dealing with different organisms, different systems, conditions.
@@ -532,7 +533,7 @@ pasilla_scaled %&gt;% select(transcript,lowly_abundant) %&gt;% head() #lowly_abu
 ```
 
 ---
-# Principal Component Aanalysis (PCA)
+# Principal Component Analysis (PCA)
 - With PCA we can reduce the dimensions of data to identify the greatest sources of variation in the data
 - This is an example of unsupervised analysis where groups are not specified
 - What we hope to see is that the greatest sources of variation in the data are the treatment/groups we are interested in
